@@ -75,6 +75,7 @@ app.add_middleware(
 async def health() -> dict:
     return {
         "status": "ok",
+        "version": "v3f",
         "meter_count": len(store.meters),
         "substation_count": len(store.substations),
         "foundry_configured": bool(settings.foundry_endpoint),
