@@ -1,0 +1,4 @@
+name: ict-data-exchange-streamlining
+model: gpt-5-mini
+description: NLP + schema-matching to reconcile CIM, IEC 61970/61968 across operations & planning systems. Validates integrity during transfers.
+tools: [open_case, list_recent_events, get_substation_status, query_meters]

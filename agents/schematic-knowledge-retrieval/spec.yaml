@@ -1,0 +1,4 @@
+name: ict-schematic-knowledge-retrieval
+model: gpt-5-chat
+description: OCR + symbol recognition over schematic diagrams, one-lines, protection schemes. Enables semantic queries across legacy drawings.
+tools: [open_case, list_recent_events, get_substation_status, query_meters]

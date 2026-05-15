@@ -1,0 +1,4 @@
+name: ict-orchestrator
+model: gpt-5-mini
+description: Routes Grid ICT, Data & Cybersecurity requests to the right specialist agent and aggregates evidence.
+tools: [open_case, dispatch_to_agent, list_recent_events, get_substation_status, query_meters]

@@ -1,0 +1,16 @@
+[project]
+name = "ami-tools"
+version = "0.1.0"
+description = "Shared AMI tool schemas and handlers for Foundry agents."
+requires-python = ">=3.10"
+dependencies = [
+  "pydantic>=2.7",
+  "numpy>=1.26",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["ami_tools*"]

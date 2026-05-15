@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node
+node_modules/
+dist/
+build/
+.vite/
+*.tsbuildinfo
+
+# Editors
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Azure / IaC
+*.bicepconfig.local.json
+infra/main.parameters.json
+outputs.json
+*.pem
+*.key
+
+# Logs
+*.log
+logs/
+
+# Synthetic data dumps
+data/synthetic/output/
+*.parquet
+*.csv.gz
+
+# Env
+.env
+.env.local

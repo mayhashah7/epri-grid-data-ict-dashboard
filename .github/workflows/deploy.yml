@@ -1,0 +1,62 @@
+name: deploy
+on:
+  workflow_dispatch:
+    inputs:
+      env_name:
+        description: Short env suffix
+        default: ami-dev
+        required: true
+      location:
+        description: Azure region
+        default: eastus2
+        required: true
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Bicep deploy
+        id: infra
+        run: |
+          az deployment sub create \
+            --location "${{ inputs.location }}" \
+            --template-file infra/main.bicep \
+            --parameters envName="${{ inputs.env_name }}" location="${{ inputs.location }}" \
+            --query 'properties.outputs' -o json > outputs.json
+          cat outputs.json
+
+      - name: ACR login + build/push
+        run: |
+          ACR=$(jq -r '.acrLoginServer.value' outputs.json)
+          az acr login -n ${ACR%%.*}
+          docker build -t "$ACR/ami-dashboard-api:${{ github.sha }}" -f apps/dashboard-api/Dockerfile .
+          docker build -t "$ACR/ami-dashboard-web:${{ github.sha }}" -f apps/dashboard-web/Dockerfile .
+          docker push "$ACR/ami-dashboard-api:${{ github.sha }}"
+          docker push "$ACR/ami-dashboard-web:${{ github.sha }}"
+          echo "ACR=$ACR" >> $GITHUB_ENV
+
+      - name: Update Container Apps
+        run: |
+          RG=$(jq -r '.resourceGroupName.value' outputs.json)
+          az containerapp update -g "$RG" -n ami-dashboard-api --image "$ACR/ami-dashboard-api:${{ github.sha }}" -o none
+          az containerapp update -g "$RG" -n ami-dashboard-web --image "$ACR/ami-dashboard-web:${{ github.sha }}" -o none
+
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+
+      - name: Seed Foundry agents
+        run: |
+          pip install -r scripts/requirements.txt
+          pip install -e agents/tools
+          python scripts/seed-foundry-agents.py --outputs outputs.json

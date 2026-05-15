@@ -1,0 +1,4 @@
+azure-identity==1.19.0
+azure-ai-agents==1.0.0b3
+azure-ai-projects==1.0.0b7
+PyYAML==6.0.2
