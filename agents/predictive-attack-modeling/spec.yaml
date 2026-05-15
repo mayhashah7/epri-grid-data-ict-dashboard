@@ -1,4 +1,4 @@
 name: ict-predictive-attack-modeling
 model: gpt-5
-description: Models adversary behavior across MITRE ATT&CK ICS to predict next-likely steps and recommend pre-emptive containment.
+description: "Models adversary behavior across MITRE ATT&CK ICS to predict next-likely steps and recommend pre-emptive containment."
 tools: [open_case, list_recent_events, get_substation_status, query_meters]

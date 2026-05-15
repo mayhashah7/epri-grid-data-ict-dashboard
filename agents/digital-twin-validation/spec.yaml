@@ -1,4 +1,4 @@
 name: ict-digital-twin-validation
 model: gpt-5
-description: Calibrates digital-twin parameters from live sensor + historical data; flags drift between simulation and reality for predictive maintenance.
+description: "Calibrates digital-twin parameters from live sensor + historical data; flags drift between simulation and reality for predictive maintenance."
 tools: [open_case, list_recent_events, get_substation_status, query_meters]

@@ -1,4 +1,4 @@
 name: ict-knowledge-graph-asset
 model: gpt-5
-description: Builds a cross-system KG linking traffic, security alerts, system logs, asset records, and work orders. Enables multi-hop investigations.
+description: "Builds a cross-system KG linking traffic, security alerts, system logs, asset records, and work orders. Enables multi-hop investigations."
 tools: [open_case, list_recent_events, get_substation_status, query_meters]
