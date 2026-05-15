@@ -15,22 +15,21 @@ from ami_tools.dispatch import handle_tool_call
 from .config import settings
 from .store import store
 
-ORCHESTRATOR_NAME = "ami-orchestrator"
+ORCHESTRATOR_NAME = "ict-orchestrator"
 
-# Full AMI agent fabric (12 total: orchestrator + 11 specialists)
+# Grid ICT, Data & Cybersecurity agent fabric (11 total: orchestrator + 10 specialists)
 AGENT_ROSTER = [
-    {"name": "ami-orchestrator",           "domain": "routing",       "icon": "🎯", "color": "#fbbf24"},
-    {"name": "ami-outage-detection",       "domain": "outage",        "icon": "🚨", "color": "#ef4444"},
-    {"name": "ami-theft-detection",        "domain": "theft",         "icon": "🕵️", "color": "#f97316"},
-    {"name": "ami-der-management",         "domain": "der",           "icon": "☀️", "color": "#facc15"},
-    {"name": "ami-demand-response",        "domain": "dr",            "icon": "⚡", "color": "#a855f7"},
-    {"name": "ami-predictive-maintenance", "domain": "maintenance",   "icon": "🔧", "color": "#0ea5e9"},
-    {"name": "ami-billing-anomaly",        "domain": "billing",       "icon": "💰", "color": "#10b981"},
-    {"name": "ami-customer-service",       "domain": "customer",      "icon": "💬", "color": "#94a3b8"},
-    {"name": "ami-grid-cybersecurity",     "domain": "security",      "icon": "🛡️", "color": "#dc2626"},
-    {"name": "ami-ev-load-orchestration",  "domain": "ev",            "icon": "🔌", "color": "#22d3ee"},
-    {"name": "ami-weather-impact",         "domain": "weather",       "icon": "🌦️", "color": "#60a5fa"},
-    {"name": "ami-tariff-optimization",    "domain": "tariff",        "icon": "📊", "color": "#34d399"},
+    {"name": "ict-orchestrator",                "domain": "routing",      "icon": "🧠", "color": "#22d3ee"},
+    {"name": "ict-asset-data-verification",     "domain": "verification", "icon": "🧾", "color": "#22d3ee"},
+    {"name": "ict-schematic-knowledge-retrieval","domain": "schematics",  "icon": "🔍", "color": "#06b6d4"},
+    {"name": "ict-schematic-creation",          "domain": "drafting",     "icon": "✏️", "color": "#0ea5e9"},
+    {"name": "ict-gis-adms-sync",               "domain": "sync",         "icon": "🗺️", "color": "#14b8a6"},
+    {"name": "ict-digital-twin-validation",     "domain": "twin",         "icon": "🧬", "color": "#0d9488"},
+    {"name": "ict-data-exchange-streamlining",  "domain": "exchange",     "icon": "🔁", "color": "#7c3aed"},
+    {"name": "ict-knowledge-graph-asset",       "domain": "kg",           "icon": "🕸️", "color": "#a855f7"},
+    {"name": "ict-cyber-threat-hunting",        "domain": "threat",       "icon": "🛡️", "color": "#ef4444"},
+    {"name": "ict-edge-cyber-anomaly",          "domain": "edge",         "icon": "📡", "color": "#f97316"},
+    {"name": "ict-predictive-attack-modeling",  "domain": "attack",       "icon": "🎯", "color": "#dc2626"},
 ]
 
 
@@ -147,29 +146,31 @@ class FoundryAgentRunner:
 
     async def _mock_chat(self, *, text: str, persona: str | None, case_id: str | None) -> AsyncIterator[dict]:
         text_l = text.lower()
-        # Routing decision (12-agent fabric)
-        if any(w in text_l for w in ["outage", "power out", "no power", "restore"]):
-            kind, target = "outage", "ami-outage-detection"
-        elif any(w in text_l for w in ["theft", "tamper", "bypass", "suspicious"]):
-            kind, target = "theft", "ami-theft-detection"
-        elif any(w in text_l for w in ["cyber", "intrusion", "anomalous traffic", "firmware", "spoof"]):
-            kind, target = "security", "ami-grid-cybersecurity"
-        elif any(w in text_l for w in ["ev ", "ev charger", "charging", "vehicle"]):
-            kind, target = "ev", "ami-ev-load-orchestration"
-        elif any(w in text_l for w in ["solar", "inverter", "backfeed", "volt-var", "der"]):
-            kind, target = "der", "ami-der-management"
-        elif any(w in text_l for w in ["demand response", "heat wave", "peak", "load shed", "shed"]):
-            kind, target = "dr", "ami-demand-response"
-        elif any(w in text_l for w in ["transformer", "harmonic", "maintenance", "aging"]):
-            kind, target = "maintenance", "ami-predictive-maintenance"
-        elif any(w in text_l for w in ["weather", "storm forecast", "temperature", "humidity"]):
-            kind, target = "weather", "ami-weather-impact"
-        elif any(w in text_l for w in ["tariff", "rate plan", "tou", "time of use", "pricing"]):
-            kind, target = "tariff", "ami-tariff-optimization"
-        elif any(w in text_l for w in ["bill", "charge", "amount"]):
-            kind, target = "billing", "ami-billing-anomaly"
+        # Routing decision (ICT-specific domains)
+        if any(w in text_l for w in ["schematic", "one-line", "drawing", "scheme", "diagram"]):
+            if any(w in text_l for w in ["create", "draft", "generate", "new", "design"]):
+                kind, target = "drafting", "ict-schematic-creation"
+            else:
+                kind, target = "schematics", "ict-schematic-knowledge-retrieval"
+        elif any(w in text_l for w in ["twin", "digital twin", "model drift", "diverge", "calibrat"]):
+            kind, target = "twin", "ict-digital-twin-validation"
+        elif any(w in text_l for w in ["crew update", "field update", "conductor", "switching", "gis", "adms", "sync"]):
+            kind, target = "sync", "ict-gis-adms-sync"
+        elif any(w in text_l for w in ["threat", "lateral", "smb", "apt", "intrusion", "attack path"]):
+            if any(w in text_l for w in ["predict", "next step", "kill chain", "path"]):
+                kind, target = "attack", "ict-predictive-attack-modeling"
+            else:
+                kind, target = "threat", "ict-cyber-threat-hunting"
+        elif any(w in text_l for w in ["edge", "rtu", "firmware", "meter anomaly", "ied", "unauthorized command"]):
+            kind, target = "edge", "ict-edge-cyber-anomaly"
+        elif any(w in text_l for w in ["knowledge graph", "kg", "work order", "pivot", "trace"]):
+            kind, target = "kg", "ict-knowledge-graph-asset"
+        elif any(w in text_l for w in ["nameplate", "ocr", "verify", "asset master", "rating"]):
+            kind, target = "verification", "ict-asset-data-verification"
+        elif any(w in text_l for w in ["exchange", "cim", "iec 61970", "schema", "mapping"]):
+            kind, target = "exchange", "ict-data-exchange-streamlining"
         else:
-            kind, target = "inquiry", "ami-customer-service"
+            kind, target = "schematics", "ict-schematic-knowledge-retrieval"
 
         # Open case (or attach)
         if not case_id:
@@ -208,9 +209,142 @@ class FoundryAgentRunner:
         yield {"type": "final", "text": answer, "case_id": case_id}
 
     async def _mock_specialist(self, *, target: str, case_id: str, text: str, persona: str | None) -> AsyncIterator[dict]:
+        import random as _r
         sub_id = self._extract_substation(text) or next(iter(store.substations), "S-01")
 
-        if target == "ami-outage-detection":
+        if target == "ict-schematic-knowledge-retrieval":
+            findings = [
+                {"drawing_id": "DWG-138-2019-04", "type": "one-line", "voltage_kv": 138, "year": 2019, "match": "breaker scheme"},
+                {"drawing_id": "DWG-138-2021-11", "type": "protection scheme", "voltage_kv": 138, "year": 2021, "match": "overcurrent relay"},
+                {"drawing_id": "DWG-138-2023-07", "type": "one-line", "voltage_kv": 138, "year": 2023, "match": "breaker scheme"},
+            ]
+            yield {"type": "tool_call", "name": "semantic_search_schematics", "arguments": {"query": text[:80]}}
+            yield {"type": "tool_result", "name": "semantic_search_schematics", "result": {"hits": findings, "total": 14}}
+            lines = "\n".join(f"• `{f['drawing_id']}` — {f['type']} · {f['voltage_kv']}kV · {f['year']}" for f in findings)
+            ans = (
+                f"🔍 **Schematic search results** (14 total matches, top 3 shown):\n{lines}\n\n"
+                f"_Confidence: embeddings match 0.91+. Full results available in the drawing management portal._"
+            )
+            handle_tool_call(store, "close_case", {"case_id": case_id, "summary": "Schematic search returned 14 matches.", "recommendation": "Review DWG-138-2023-07 first (most recent)"})
+            yield {"type": "answer", "text": ans}
+
+        elif target == "ict-schematic-creation":
+            draft = {
+                "drawing_id": f"DRAFT-{_r.randint(1000,9999)}",
+                "type": "one-line",
+                "voltage_kv": 25,
+                "components": ["2× reclosers", "1× sectionalizer", "4× fuse cutouts", "SCADA RTU"],
+                "code_checks": ["NESC 234 ✓", "IEEE C37.60 ✓", "NERC FAC-001 ✓"],
+            }
+            yield {"type": "tool_call", "name": "generate_schematic", "arguments": {"spec": text[:120]}}
+            yield {"type": "tool_result", "name": "generate_schematic", "result": draft}
+            comps = ", ".join(draft["components"])
+            checks = ", ".join(draft["code_checks"])
+            ans = (
+                f"✏️ **Draft schematic `{draft['drawing_id']}`** generated for a 25kV recloser zone:\n"
+                f"• Components: {comps}\n"
+                f"• Code checks passed: {checks}\n"
+                f"• Layout optimized for minimal conductor sag and protection coordination.\n"
+                f"_Ready for PE review — export to DXF/DWG available._"
+            )
+            handle_tool_call(store, "close_case", {"case_id": case_id, "summary": f"Draft {draft['drawing_id']} created.", "recommendation": "PE review then issue for construction"})
+            yield {"type": "answer", "text": ans}
+
+        elif target == "ict-digital-twin-validation":
+            drift_pct = round(_r.uniform(3, 15), 1)
+            cause = _r.choice(["unregistered DER", "topology mismatch at feeder F-12", "stale impedance data from 2022 GIS export"])
+            yield {"type": "tool_call", "name": "compare_twin_vs_telemetry", "arguments": {"feeder": "F-12", "horizon_h": 1}}
+            yield {"type": "tool_result", "name": "compare_twin_vs_telemetry", "result": {"drift_pct": drift_pct, "cause": cause, "calibration_needed": True}}
+            ans = (
+                f"🧬 **Digital twin drift detected on feeder F-12**: **{drift_pct}% divergence** from live telemetry.\n"
+                f"• Root cause: _{cause}_\n"
+                f"• Recommended action: re-ingest GIS delta from last crew update + re-run power flow.\n"
+                f"• Estimated re-calibration time: ~8 minutes with the automated pipeline."
+            )
+            handle_tool_call(store, "close_case", {"case_id": case_id, "summary": f"Twin drift {drift_pct}% on F-12: {cause}.", "recommendation": "Re-ingest GIS delta"})
+            yield {"type": "answer", "text": ans}
+
+        elif target == "ict-gis-adms-sync":
+            yield {"type": "tool_call", "name": "push_field_update_to_adms", "arguments": {"span": "33-7", "change": "conductor reroute"}}
+            yield {"type": "tool_result", "name": "push_field_update_to_adms", "result": {"ok": True, "records_updated": 3, "lag_eliminated_min": 47}}
+            ans = (
+                f"🗺️ **GIS/ADMS sync complete** for span 33-7 conductor reroute:\n"
+                f"• 3 topology records updated in ADMS + GIS simultaneously.\n"
+                f"• Eliminated **47-minute model lag** that would have persisted until next nightly sync.\n"
+                f"• Digital twin automatically re-queued for calibration."
+            )
+            handle_tool_call(store, "close_case", {"case_id": case_id, "summary": "ADMS/GIS sync: 3 records updated, 47 min lag eliminated.", "recommendation": "Verify in EMS within 5 min"})
+            yield {"type": "answer", "text": ans}
+
+        elif target == "ict-cyber-threat-hunting":
+            hosts = [f"SUB-{sub_id}-RTU-{_r.randint(1,8)}" for _ in range(3)]
+            yield {"type": "tool_call", "name": "hunt_lateral_movement", "arguments": {"protocol": "SMB", "zone": f"{sub_id}"}}
+            yield {"type": "tool_result", "name": "hunt_lateral_movement", "result": {"suspicious_hosts": hosts, "technique": "T0886 lateral tool transfer", "confidence": 0.87}}
+            lines = "\n".join(f"• `{h}`" for h in hosts)
+            ans = (
+                f"🛡️ **OT threat hunt on {sub_id}** — MITRE ATT&CK ICS technique **T0886** (lateral tool transfer) detected.\n"
+                f"Suspicious hosts ({len(hosts)}):\n{lines}\n"
+                f"• Confidence: **87%** · Recommending network isolation + SOC escalation.\n"
+                f"_Patch window needed within 24h to prevent persistence._"
+            )
+            handle_tool_call(store, "close_case", {"case_id": case_id, "summary": f"T0886 on {len(hosts)} hosts in {sub_id}.", "recommendation": "Isolate + SOC P1"})
+            yield {"type": "answer", "text": ans}
+
+        elif target == "ict-edge-cyber-anomaly":
+            rtu_id = f"RTU-{sub_id}-{_r.randint(100,200)}"
+            signal = _r.choice(["unsigned firmware update", "unexpected config read", "unauthenticated command"])
+            yield {"type": "tool_call", "name": "analyze_edge_device", "arguments": {"device": rtu_id}}
+            yield {"type": "tool_result", "name": "analyze_edge_device", "result": {"device": rtu_id, "signal": signal, "severity": "high", "action": "quarantine"}}
+            ans = (
+                f"📡 **Edge anomaly on `{rtu_id}`**: _{signal}_ detected.\n"
+                f"• Severity: **HIGH** · Automated response: network quarantine applied.\n"
+                f"• Firmware hash mismatch vs vendor golden image — likely tamper attempt.\n"
+                f"_Recommended: hardware audit + replacement if hash not cleared within 2h._"
+            )
+            handle_tool_call(store, "close_case", {"case_id": case_id, "summary": f"Edge anomaly on {rtu_id}: {signal}.", "recommendation": "Quarantine + firmware audit"})
+            yield {"type": "answer", "text": ans}
+
+        elif target == "ict-predictive-attack-modeling":
+            next_steps = ["Establish C2 via Living-off-the-land (T0858)", "Target historian server (T0882)", "Manipulate process setpoints (T0836)"]
+            yield {"type": "tool_call", "name": "predict_attack_path", "arguments": {"phase": "recon", "asset": "HMI"}}
+            yield {"type": "tool_result", "name": "predict_attack_path", "result": {"current_phase": "recon", "predicted_steps": next_steps, "ttc_hours": 6}}
+            steps = "\n".join(f"{i+1}. {s}" for i, s in enumerate(next_steps))
+            ans = (
+                f"🎯 **Attack path prediction** — adversary in **recon phase** on HMI:\n"
+                f"Predicted next steps (within ~6h):\n{steps}\n\n"
+                f"• Pre-emptive controls: disable unnecessary HMI remote access, rotate engineering credentials, enable historian audit logging.\n"
+                f"_MITRE ATT&CK ICS coverage: T0858, T0882, T0836._"
+            )
+            handle_tool_call(store, "close_case", {"case_id": case_id, "summary": "Attack path predicted: recon → C2 → historian → setpoint manipulation.", "recommendation": "Pre-emptive credential rotation"})
+            yield {"type": "answer", "text": ans}
+
+        elif target == "ict-knowledge-graph-asset":
+            related = [
+                {"type": "outage", "id": f"OUT-{_r.randint(1000,9999)}", "rel": "caused_by"},
+                {"type": "inspection", "id": f"INSP-{_r.randint(100,999)}", "rel": "preceded"},
+                {"type": "asset", "id": f"TX-{_r.randint(10,99)}", "rel": "affects"},
+            ]
+            yield {"type": "tool_call", "name": "kg_pivot", "arguments": {"start": "WO-9821", "depth": 2}}
+            yield {"type": "tool_result", "name": "kg_pivot", "result": {"start": "WO-9821", "related": related}}
+            lines = "\n".join(f"• [{e['type']}] `{e['id']}` ← _{e['rel']}_" for e in related)
+            ans = (
+                f"🕸️ **Knowledge graph pivot from WO-9821** (depth-2 traversal):\n{lines}\n\n"
+                f"• Cross-linked {len(related)} entities across work-orders, outage, and asset records.\n"
+                f"_Use the full graph to trace root cause chains across systems without manual correlation._"
+            )
+            handle_tool_call(store, "close_case", {"case_id": case_id, "summary": f"KG pivot WO-9821: {len(related)} entities linked.", "recommendation": "Review TX asset for underlying failure"})
+            yield {"type": "answer", "text": ans}
+
+        else:  # asset-data-verification / data-exchange / fallback
+            yield {"type": "tool_call", "name": "verify_nameplate", "arguments": {"substation_id": sub_id}}
+            yield {"type": "tool_result", "name": "verify_nameplate", "result": {"verified": 142, "mismatches": 3, "substation_id": sub_id}}
+            ans = (
+                f"🧾 **Asset data verification on {sub_id}**: 142 nameplates verified · **3 mismatches** vs asset-master DB.\n"
+                f"• Mismatch types: 1× MVA rating, 2× voltage class.\n"
+                f"• Recommend field re-inspection on the 3 mismatched records before next planning cycle."
+            )
+            handle_tool_call(store, "close_case", {"case_id": case_id, "summary": f"3 nameplate mismatches on {sub_id}.", "recommendation": "Field re-inspection"})
+            yield {"type": "answer", "text": ans}
             tg = handle_tool_call(store, "group_outage_by_topology", {"substation_id": sub_id})
             yield {"type": "tool_call", "name": "group_outage_by_topology", "arguments": {"substation_id": sub_id}}
             yield {"type": "tool_result", "name": "group_outage_by_topology", "result": tg}
@@ -274,146 +408,6 @@ class FoundryAgentRunner:
             handle_tool_call(store, "close_case", {"case_id": case_id, "summary": f"{r1['overvoltage_count']} DER meters over-voltage on {sub_id}.", "recommendation": json.dumps(curve)})
             yield {"type": "answer", "text": ans}
 
-        elif target == "ami-demand-response":
-            r = handle_tool_call(store, "compute_demand_response", {"target_mw": 5, "window_minutes": 60, "cohort_filters": ["residential", "opt_in_DR"]})
-            yield {"type": "tool_result", "name": "compute_demand_response", "result": r}
-            ans = (
-                f"⚡ **DR event staged** ({r['target_mw']} MW target, {r['window_minutes']}m window):\n"
-                f"• Cohort: **{r['cohort_size']}** opt-in residential meters\n"
-                f"• Projected shed: **{r['projected_shed_mw']} MW** (p10 {r['shed_p10_mw']} · p90 {r['shed_p90_mw']})\n"
-                f"• Comfort impact: ~{r['comfort_temperature_rise_f']}°F indoor rise\n"
-                f"• Payment liability: **${r['payment_liability_usd']}**\n"
-                f"_Awaiting operator approval to dispatch._"
-            )
-            handle_tool_call(store, "close_case", {"case_id": case_id, "summary": f"DR event staged: {r['cohort_size']} meters → ~{r['projected_shed_mw']} MW.", "recommendation": f"Stage event; ${r['payment_liability_usd']}"})
-            yield {"type": "answer", "text": ans}
-
-        elif target == "ami-predictive-maintenance":
-            r = handle_tool_call(store, "score_transformer_health", {"substation_id": sub_id})
-            yield {"type": "tool_call", "name": "score_transformer_health", "arguments": {"substation_id": sub_id}}
-            yield {"type": "tool_result", "name": "score_transformer_health", "result": r}
-            worst = r.get("worst", [])
-            urgent = [t for t in worst if t["health"] < 30]
-            lines = "\n".join(f"• `{t['transformer_id']}` — health **{t['health']}/100** · load {t['load_pct']}% · THD {t['thd_pct']}% · drivers: {', '.join(t['drivers'])} → _{t['recommended_action']}_" for t in worst)
-            ans = (
-                f"🔧 **Transformer health on {sub_id}** ({r['transformer_count']} units scored):\n"
-                f"Bottom 5:\n{lines}\n"
-                f"\n**{len(urgent)}** transformer(s) need urgent inspection within 7 days."
-            )
-            handle_tool_call(store, "close_case", {"case_id": case_id, "summary": f"{len(urgent)} urgent transformers on {sub_id}.", "recommendation": "; ".join(f"{t['transformer_id']}={t['recommended_action']}" for t in worst[:3])})
-            yield {"type": "answer", "text": ans}
-
-        elif target == "ami-billing-anomaly":
-            sample_meter = next(iter(store.meters))
-            r = handle_tool_call(store, "detect_billing_anomaly", {"meter_id": sample_meter, "period_a": "2026-07", "period_b": "2026-08"})
-            yield {"type": "tool_result", "name": "detect_billing_anomaly", "result": r}
-            pct = round((r["period_b_kwh"] / r["period_a_kwh"] - 1) * 100, 1)
-            drivers = "\n".join(f"• {d['name'].replace('_',' ')}: **{d['share_pct']}%** (~${d['dollars']}){'  — '+d['note'] if d.get('note') else ''}" for d in r["drivers"])
-            ans = (
-                f"📊 **Bill change for `{sample_meter}`**: ${r['delta_dollars']} higher (+{pct}%, {r['period_a_kwh']} → {r['period_b_kwh']} kWh).\n"
-                f"Decomposition:\n{drivers}\n"
-                f"\n💡 **Recommendation:** {r['recommendation']}"
-            )
-            handle_tool_call(store, "close_case", {"case_id": case_id, "summary": f"Bill +${r['delta_dollars']} ({pct}%); weather-led.", "recommendation": r["recommendation"]})
-            yield {"type": "answer", "text": ans}
-
-        elif target == "ami-grid-cybersecurity":
-            # Synthetic but plausible — sample a few meters and pretend we ran an IDS pass
-            import random as _r
-            sub_meters = store.list_meters_in_substation(sub_id)
-            sample = _r.sample(sub_meters, min(8, len(sub_meters))) if sub_meters else []
-            findings = []
-            for m in sample[:3]:
-                findings.append({
-                    "meter_id": m["meter_id"],
-                    "signal": _r.choice(["unauthorized_firmware_query", "rapid_reauth_burst", "unsigned_command_attempt", "geo_anomalous_traffic"]),
-                    "severity": _r.choice(["low", "medium", "high"]),
-                    "src_asn": _r.choice(["AS15169", "AS8075", "AS13335"]),
-                })
-            crit = sum(1 for f in findings if f["severity"] == "high")
-            yield {"type": "tool_call", "name": "scan_grid_edge_traffic", "arguments": {"substation_id": sub_id}}
-            yield {"type": "tool_result", "name": "scan_grid_edge_traffic", "result": {"ok": True, "findings": findings, "scope": sub_id}}
-            handle_tool_call(store, "record_trace", {"case_id": case_id, "agent": target, "step": "scan", "status": "in_progress", "payload": {"findings": findings}})
-            lines = "\n".join(f"• `{f['meter_id']}` — **{f['signal']}** · severity {f['severity']} · src {f['src_asn']}" for f in findings) or "• (no anomalies detected in sample)"
-            ans = (
-                f"🛡️ **Grid-edge cybersecurity scan on {sub_id}** — {len(findings)} signal(s) of interest, {crit} high severity.\n"
-                f"{lines}\n"
-                f"_Recommendation: {'isolate suspect meters at NIC + open SOC ticket' if crit else 'continue passive monitoring; no action required'}_."
-            )
-            handle_tool_call(store, "close_case", {"case_id": case_id, "summary": f"{len(findings)} cyber signals on {sub_id}; {crit} high.", "recommendation": "Isolate + SOC ticket" if crit else "Monitor"})
-            yield {"type": "answer", "text": ans}
-
-        elif target == "ami-ev-load-orchestration":
-            evs = [m for m in store.list_meters_in_substation(sub_id) if m.get("persona") == "ev-owner"]
-            current_load_kw = sum((m.get("last_kw") or 0.0) for m in evs)
-            shiftable_kw = round(current_load_kw * 0.65, 1)
-            yield {"type": "tool_call", "name": "enumerate_ev_chargers", "arguments": {"substation_id": sub_id}}
-            yield {"type": "tool_result", "name": "enumerate_ev_chargers", "result": {"ok": True, "ev_count": len(evs), "current_load_kw": round(current_load_kw, 1)}}
-            handle_tool_call(store, "record_trace", {"case_id": case_id, "agent": target, "step": "enumerate", "status": "in_progress", "payload": {"ev_count": len(evs)}})
-            ans = (
-                f"🔌 **EV load on {sub_id}**: {len(evs)} EV-owner meters · current draw **{round(current_load_kw,1)} kW**.\n"
-                f"• Shiftable to off-peak window (00:00–05:00): **~{shiftable_kw} kW** ({int(shiftable_kw/max(current_load_kw,0.1)*100)}%)\n"
-                f"• Recommend a 2-hour 'pause + resume' nudge on opt-in chargers; expected $ impact for participants: $0.18/kWh saved.\n"
-                f"_Avoids ~{round(shiftable_kw*2/1000, 2)} MWh of evening peak._"
-            )
-            handle_tool_call(store, "close_case", {"case_id": case_id, "summary": f"{len(evs)} EVs on {sub_id}; ~{shiftable_kw} kW shiftable.", "recommendation": "Schedule off-peak nudge"})
-            yield {"type": "answer", "text": ans}
-
-        elif target == "ami-weather-impact":
-            # Build region label from substation
-            region = f"{sub_id}-zone"
-            w = handle_tool_call(store, "get_weather", {"region": region, "hours": 24})
-            yield {"type": "tool_result", "name": "get_weather", "result": w}
-            ss = handle_tool_call(store, "get_substation_status", {"substation_id": sub_id})
-            yield {"type": "tool_result", "name": "get_substation_status", "result": ss}
-            handle_tool_call(store, "record_trace", {"case_id": case_id, "agent": target, "step": "correlate", "status": "in_progress", "payload": {"cdd": w["cdd"], "load_kw": ss["total_kw"]}})
-            # Synthetic correlation
-            cooling_share = min(70, int(w["cdd"] * 4))
-            ans = (
-                f"🌦️ **Weather impact on {sub_id}** (last 24h):\n"
-                f"• Heat-index max: **{w['heat_index_max_f']}°F** · CDD: **{w['cdd']}**\n"
-                f"• Substation load: **{ss['total_kw']} kW** total across {ss['meter_count']} meters\n"
-                f"• Estimated cooling-driven share of load: **~{cooling_share}%**\n"
-                f"_Recommendation: pre-cool cohort 30 min before forecast peak (saves ~3% peak demand)._"
-            )
-            handle_tool_call(store, "close_case", {"case_id": case_id, "summary": f"Weather correlation: ~{cooling_share}% of {sub_id} load is cooling-driven.", "recommendation": "Pre-cool nudge"})
-            yield {"type": "answer", "text": ans}
-
-        elif target == "ami-tariff-optimization":
-            sample_meter = next(iter(store.meters))
-            m = handle_tool_call(store, "get_meter", {"meter_id": sample_meter})["meter"]
-            t = handle_tool_call(store, "get_tariff", {"meter_id": sample_meter})
-            n = handle_tool_call(store, "compare_to_neighbors", {"meter_id": sample_meter, "days": 30})
-            yield {"type": "tool_result", "name": "get_meter", "result": {"meter": m}}
-            yield {"type": "tool_result", "name": "get_tariff", "result": t}
-            yield {"type": "tool_result", "name": "compare_to_neighbors", "result": n}
-            handle_tool_call(store, "record_trace", {"case_id": case_id, "agent": target, "step": "evaluate", "status": "in_progress", "payload": {"current_tariff": t["tariff"]}})
-            est_savings = round(n["your_kwh"] * 0.024, 2)
-            ans = (
-                f"📊 **Tariff optimization for `{m['meter_id']}`** (currently **{t['tariff']}**):\n"
-                f"• Last 30 days: **{n['your_kwh']} kWh** (cohort median {n['cohort_median_kwh']} kWh, you're at p{int(n['percentile'])})\n"
-                f"• Switching to TOU-D5 with off-peak shifting → estimated savings **~${est_savings}/mo**\n"
-                f"• Best fit because: high evening usage, low weekend usage, opt-in eligible."
-            )
-            handle_tool_call(store, "close_case", {"case_id": case_id, "summary": f"Recommend TOU-D5 for `{m['meter_id']}` (~${est_savings}/mo savings).", "recommendation": "Enroll TOU-D5"})
-            yield {"type": "answer", "text": ans}
-
-        else:  # customer-service
-            sample_meter = next(iter(store.meters))
-            m = handle_tool_call(store, "get_meter", {"meter_id": sample_meter})["meter"]
-            ss = handle_tool_call(store, "get_substation_status", {"substation_id": m["substation_id"]})
-            yield {"type": "tool_result", "name": "get_meter", "result": {"meter": m}}
-            yield {"type": "tool_result", "name": "get_substation_status", "result": ss}
-            status = "✅ Power is on" if m.get("online") else "⚠️ Power is currently OUT"
-            ans = (
-                f"{status} for meter `{m['meter_id']}` ({m['persona']} on tariff {m['tariff']}).\n"
-                f"• Last reading: **{m['last_kw']} kW** at **{m['last_voltage']} V**.\n"
-                f"• Substation **{m['substation_id']}** is currently serving {ss['meter_count']} meters · "
-                f"{ss['offline_count']} offline · {ss['total_kw']} kW total.\n"
-                f"_Anything else I can help with?_"
-            )
-            handle_tool_call(store, "close_case", {"case_id": case_id, "summary": "Customer Q&A answered with grounded meter data.", "recommendation": "n/a"})
-            yield {"type": "answer", "text": ans}
 
 
 runner = FoundryAgentRunner()
@@ -421,27 +415,20 @@ runner = FoundryAgentRunner()
 
 # ── Public helper: turn a scenario event into an autonomous agent run ──────
 
-# Maps scenario `kind` → an orchestrator-style chat prompt that triggers the
-# right specialist with the right substation context.
 EVENT_TO_PROMPT = {
-    "outage":             "There is an active outage on substation {substation_id}. Triage and recommend dispatch.",
-    "tamper":             "Suspicious tamper readings reported on substation {substation_id}. Hunt for theft.",
-    "der_overvoltage":    "Solar backfeed overvoltage detected on substation {substation_id}. Recommend Volt-VAR.",
-    "load_forecast_high": "Heat-wave demand forecast triggered. Plan a 5 MW DR event for the next hour.",
-    "transformer_health": "Run transformer health on substation {substation_id}.",
-    "cyber":              "Cybersecurity anomaly burst on substation {substation_id}. Scan grid edge.",
-    "ev_surge":           "EV charging surge on substation {substation_id}. Optimize the load.",
-    "weather_alert":      "Weather alert flagged for substation {substation_id}. Correlate impact.",
+    "schematic-search":   "Search schematics for 138kV breaker schemes installed since 2018.",
+    "twin-drift":         "Digital twin drift detected on feeder F-12 — validate and recommend recalibration.",
+    "crew-update":        "Field crew rerouted conductor on span 33-7. Push update to GIS and ADMS.",
+    "threat-burst":       "Lateral SMB traffic spike detected between substations {substation_id}. Hunt the threat.",
+    "edge-anomaly":       "Edge anomaly on RTU R-118 — unsigned firmware update attempt. Investigate.",
+    "attack-prediction":  "Recon phase observed on HMI at substation {substation_id}. Predict attack path.",
+    "kg-investigation":   "Pivot from work-order WO-9821 to all related outage and asset events.",
+    "schematic-create":   "Draft a new one-line schematic for a 25kV recloser zone.",
 }
 
 
 async def auto_dispatch_for_event(event: dict) -> None:
-    """Run the orchestrator + specialist pipeline for a system event.
-
-    Used by `simulator` when a scenario is fired so the user immediately sees
-    a case + traces + recommendation populate without typing anything in chat.
-    Streams agent activity to the dashboard activity feed via WebSocket.
-    """
+    """Run the orchestrator + specialist pipeline for a system event."""
     kind = event.get("kind")
     sub_id = event.get("substation_id") or next(iter(store.substations), "S-01")
     template = EVENT_TO_PROMPT.get(kind)

@@ -167,6 +167,20 @@ class ScenarioReq(BaseModel):
     count: int | None = None
 
 
+@app.get("/api/scenario-meta")  # separate path avoids conflict with /{name}
+async def list_scenarios() -> list[dict]:
+    return [
+        {"id": "schematic-search",  "label": "🔍 Schematic Q&A",      "agent": "ict-schematic-knowledge-retrieval", "hint": "Find all 138kV breaker schemes installed since 2018"},
+        {"id": "twin-drift",        "label": "🧬 Digital Twin Drift",  "agent": "ict-digital-twin-validation",       "hint": "Live load on feeder F-12 diverges 9% from twin prediction"},
+        {"id": "crew-update",       "label": "🗺️ Field Crew Update",   "agent": "ict-gis-adms-sync",                 "hint": "Crew rerouted conductor on span 33-7 — sync model"},
+        {"id": "threat-burst",      "label": "🛡️ OT Threat Burst",     "agent": "ict-cyber-threat-hunting",          "hint": "Lateral SMB spike between substations S-04 and S-09"},
+        {"id": "edge-anomaly",      "label": "📡 Edge Anomaly",        "agent": "ict-edge-cyber-anomaly",            "hint": "RTU R-118 unsigned firmware update attempt"},
+        {"id": "attack-prediction", "label": "🎯 Attack Path",         "agent": "ict-predictive-attack-modeling",    "hint": "Recon phase on HMI — predict next steps"},
+        {"id": "kg-investigation",  "label": "🕸️ KG Pivot",            "agent": "ict-knowledge-graph-asset",         "hint": "Pivot from work-order WO-9821 to all related events"},
+        {"id": "schematic-create",  "label": "✏️ New Scheme Draft",    "agent": "ict-schematic-creation",            "hint": "Draft a one-line for a new 25kV recloser zone"},
+    ]
+
+
 @app.post("/api/scenarios/{name}")
 async def run_scenario(name: str, req: ScenarioReq | None = None) -> dict:
     fn = SCENARIOS.get(name)

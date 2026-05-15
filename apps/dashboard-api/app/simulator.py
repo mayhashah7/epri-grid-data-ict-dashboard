@@ -181,164 +181,124 @@ async def simulator_loop() -> None:
 
 # ── Scenarios ──────────────────────────────────────────────────────────────
 
-async def scenario_storm_outage(substation_id: str | None = None, feeder_index: int = 7) -> dict:
-    sub_id = substation_id or next(iter(store.substations))
-    feeder_id = f"{sub_id}-F{feeder_index:02d}"
-    affected = [m for m in store.meters.values()
-                if m["substation_id"] == sub_id and m["feeder_id"] == feeder_id]
-    for m in affected:
-        m["online"] = False
-    # Add a few customer calls
-    now = datetime.now(timezone.utc)
-    for _ in range(min(5, len(affected) // 50 or 3)):
-        call = {
-            "id": str(uuid.uuid4()),
-            "call_id": str(uuid.uuid4()),
-            "substation_id": sub_id,
-            "from": f"+1512555{random.randint(1000, 9999)}",
-            "ts": now.isoformat(),
-            "issue": "no power",
-        }
-        store.add_call(call)
+async def scenario_schematic_search() -> dict:
     evt = {
         "id": str(uuid.uuid4()),
-        "kind": "outage",
-        "severity": 1,
-        "substation_id": sub_id,
-        "feeder_id": feeder_id,
-        "meter_ids": [m["meter_id"] for m in affected[:50]],
-        "ts": now.isoformat(),
-        "payload": {"affected_count": len(affected), "scope": "feeder"},
-    }
-    store.add_event(evt)
-    asyncio.create_task(_dispatch_safe(evt))
-    return {"event_id": evt["id"], "affected": len(affected), "substation_id": sub_id, "feeder_id": feeder_id, "agent_dispatched": "ami-outage-detection"}
-
-
-async def scenario_der_overvoltage(substation_id: str | None = None) -> dict:
-    sub_id = substation_id or next(iter(store.substations))
-    sols = [m for m in store.meters.values() if m["substation_id"] == sub_id and m["persona"] == "solar"]
-    for m in sols:
-        m["last_voltage"] = 254.0 + random.uniform(0, 4)
-    evt = {
-        "id": str(uuid.uuid4()),
-        "kind": "der_overvoltage",
-        "severity": 2,
-        "substation_id": sub_id,
-        "meter_ids": [m["meter_id"] for m in sols[:50]],
+        "kind": "schematic-search",
+        "label": "Schematic Q&A",
         "ts": datetime.now(timezone.utc).isoformat(),
-        "payload": {"affected_count": len(sols)},
+        "summary": "Find all 138kV breaker schemes installed since 2018",
+        "details": {"vertical": "grid-data-ict", "agent": "ict-schematic-knowledge-retrieval"},
     }
-    store.add_event(evt)
+    store.events.append(evt)
+    await store.broadcast({"type": "scenario", **evt})
     asyncio.create_task(_dispatch_safe(evt))
-    return {"event_id": evt["id"], "affected": len(sols), "substation_id": sub_id, "agent_dispatched": "ami-der-management"}
+    return {**evt, "agent_dispatched": "ict-schematic-knowledge-retrieval"}
 
 
-async def scenario_heat_wave() -> dict:
-    # Bump baselines globally for an hour
-    for m in store.meters.values():
-        m["baseline_kw"] *= 1.35
+async def scenario_twin_drift() -> dict:
     evt = {
         "id": str(uuid.uuid4()),
-        "kind": "load_forecast_high",
-        "severity": 2,
-        "substation_id": "system",
-        "meter_ids": [],
+        "kind": "twin-drift",
+        "label": "Digital Twin Drift",
         "ts": datetime.now(timezone.utc).isoformat(),
-        "payload": {"forecast_peak_mw": 1850, "reserve_margin_pct": 4.5, "scenario": "heat_wave"},
+        "summary": "Live load on feeder F-12 diverges 9% from twin prediction",
+        "details": {"vertical": "grid-data-ict", "agent": "ict-digital-twin-validation"},
     }
-    store.add_event(evt)
+    store.events.append(evt)
+    await store.broadcast({"type": "scenario", **evt})
     asyncio.create_task(_dispatch_safe(evt))
-    return {"event_id": evt["id"], "scenario": "heat_wave", "agent_dispatched": "ami-demand-response"}
+    return {**evt, "agent_dispatched": "ict-digital-twin-validation"}
 
 
-async def scenario_theft(substation_id: str | None = None, count: int = 3) -> dict:
-    sub_id = substation_id or next(iter(store.substations))
-    cands = [m for m in store.meters.values()
-             if m["substation_id"] == sub_id and m["persona"] == "residential"]
-    chosen = random.sample(cands, min(count, len(cands)))
-    for m in chosen:
-        m["theft_active"] = True
-        m["flat_overnight"] = True
+async def scenario_crew_update() -> dict:
     evt = {
         "id": str(uuid.uuid4()),
-        "kind": "tamper",
-        "severity": 2,
-        "substation_id": sub_id,
-        "meter_ids": [m["meter_id"] for m in chosen],
+        "kind": "crew-update",
+        "label": "Field Crew Update",
         "ts": datetime.now(timezone.utc).isoformat(),
-        "payload": {"tamper_count": len(chosen)},
+        "summary": "Crew rerouted conductor on span 33-7 — sync model",
+        "details": {"vertical": "grid-data-ict", "agent": "ict-gis-adms-sync"},
     }
-    store.add_event(evt)
+    store.events.append(evt)
+    await store.broadcast({"type": "scenario", **evt})
     asyncio.create_task(_dispatch_safe(evt))
-    return {"event_id": evt["id"], "affected": len(chosen), "substation_id": sub_id, "agent_dispatched": "ami-theft-detection"}
+    return {**evt, "agent_dispatched": "ict-gis-adms-sync"}
 
 
-async def scenario_transformer_aging(substation_id: str | None = None) -> dict:
-    sub_id = substation_id or next(iter(store.substations))
+async def scenario_threat_burst() -> dict:
     evt = {
         "id": str(uuid.uuid4()),
-        "kind": "transformer_health",
-        "severity": 2,
-        "substation_id": sub_id,
-        "meter_ids": [],
+        "kind": "threat-burst",
+        "label": "OT Threat Burst",
         "ts": datetime.now(timezone.utc).isoformat(),
-        "payload": {"reason": "harmonic distortion + sustained load proxy crossed threshold"},
+        "summary": "Spike in lateral SMB traffic between substations S-04 ↔ S-09",
+        "details": {"vertical": "grid-data-ict", "agent": "ict-cyber-threat-hunting"},
     }
-    store.add_event(evt)
+    store.events.append(evt)
+    await store.broadcast({"type": "scenario", **evt})
     asyncio.create_task(_dispatch_safe(evt))
-    return {"event_id": evt["id"], "substation_id": sub_id, "agent_dispatched": "ami-predictive-maintenance"}
+    return {**evt, "agent_dispatched": "ict-cyber-threat-hunting"}
 
 
-async def scenario_cyber_burst(substation_id: str | None = None) -> dict:
-    sub_id = substation_id or next(iter(store.substations))
+async def scenario_edge_anomaly() -> dict:
     evt = {
         "id": str(uuid.uuid4()),
-        "kind": "cyber",
-        "severity": 1,
-        "substation_id": sub_id,
-        "meter_ids": [],
+        "kind": "edge-anomaly",
+        "label": "Edge Anomaly",
         "ts": datetime.now(timezone.utc).isoformat(),
-        "payload": {"reason": "elevated rate of unauthorized firmware queries from grid-edge NICs"},
+        "summary": "RTU R-118 reporting unsigned firmware update attempt",
+        "details": {"vertical": "grid-data-ict", "agent": "ict-edge-cyber-anomaly"},
     }
-    store.add_event(evt)
+    store.events.append(evt)
+    await store.broadcast({"type": "scenario", **evt})
     asyncio.create_task(_dispatch_safe(evt))
-    return {"event_id": evt["id"], "substation_id": sub_id, "agent_dispatched": "ami-grid-cybersecurity"}
+    return {**evt, "agent_dispatched": "ict-edge-cyber-anomaly"}
 
 
-async def scenario_ev_surge(substation_id: str | None = None) -> dict:
-    sub_id = substation_id or next(iter(store.substations))
-    evs = [m for m in store.meters.values() if m["substation_id"] == sub_id and m["persona"] == "ev-owner"]
-    for m in evs:
-        m["baseline_kw"] = max(m["baseline_kw"], 7.5)  # simulate plug-in surge
+async def scenario_attack_prediction() -> dict:
     evt = {
         "id": str(uuid.uuid4()),
-        "kind": "ev_surge",
-        "severity": 2,
-        "substation_id": sub_id,
-        "meter_ids": [m["meter_id"] for m in evs[:25]],
+        "kind": "attack-prediction",
+        "label": "Attack Path Prediction",
         "ts": datetime.now(timezone.utc).isoformat(),
-        "payload": {"ev_count": len(evs), "trigger": "evening plug-in burst"},
+        "summary": "Recon phase observed on HMI — predict next steps",
+        "details": {"vertical": "grid-data-ict", "agent": "ict-predictive-attack-modeling"},
     }
-    store.add_event(evt)
+    store.events.append(evt)
+    await store.broadcast({"type": "scenario", **evt})
     asyncio.create_task(_dispatch_safe(evt))
-    return {"event_id": evt["id"], "substation_id": sub_id, "ev_count": len(evs), "agent_dispatched": "ami-ev-load-orchestration"}
+    return {**evt, "agent_dispatched": "ict-predictive-attack-modeling"}
 
 
-async def scenario_weather_alert(substation_id: str | None = None) -> dict:
-    sub_id = substation_id or next(iter(store.substations))
+async def scenario_kg_investigation() -> dict:
     evt = {
         "id": str(uuid.uuid4()),
-        "kind": "weather_alert",
-        "severity": 2,
-        "substation_id": sub_id,
-        "meter_ids": [],
+        "kind": "kg-investigation",
+        "label": "Knowledge Graph Pivot",
         "ts": datetime.now(timezone.utc).isoformat(),
-        "payload": {"alert": "Excessive heat warning + thunderstorm watch"},
+        "summary": "Pivot from work-order WO-9821 to all related events",
+        "details": {"vertical": "grid-data-ict", "agent": "ict-knowledge-graph-asset"},
     }
-    store.add_event(evt)
+    store.events.append(evt)
+    await store.broadcast({"type": "scenario", **evt})
     asyncio.create_task(_dispatch_safe(evt))
-    return {"event_id": evt["id"], "substation_id": sub_id, "agent_dispatched": "ami-weather-impact"}
+    return {**evt, "agent_dispatched": "ict-knowledge-graph-asset"}
+
+
+async def scenario_schematic_create() -> dict:
+    evt = {
+        "id": str(uuid.uuid4()),
+        "kind": "schematic-create",
+        "label": "New Scheme Draft",
+        "ts": datetime.now(timezone.utc).isoformat(),
+        "summary": "Draft a one-line for a new 25kV recloser zone",
+        "details": {"vertical": "grid-data-ict", "agent": "ict-schematic-creation"},
+    }
+    store.events.append(evt)
+    await store.broadcast({"type": "scenario", **evt})
+    asyncio.create_task(_dispatch_safe(evt))
+    return {**evt, "agent_dispatched": "ict-schematic-creation"}
 
 
 async def _dispatch_safe(evt: dict) -> None:
@@ -351,12 +311,23 @@ async def _dispatch_safe(evt: dict) -> None:
 
 
 SCENARIOS = {
-    "storm-outage":        scenario_storm_outage,
-    "der-overvoltage":     scenario_der_overvoltage,
-    "heat-wave":           scenario_heat_wave,
-    "theft":               scenario_theft,
-    "transformer-aging":   scenario_transformer_aging,
-    "cyber-burst":         scenario_cyber_burst,
-    "ev-surge":            scenario_ev_surge,
-    "weather-alert":       scenario_weather_alert,
+    "schematic-search":   scenario_schematic_search,
+    "twin-drift":         scenario_twin_drift,
+    "crew-update":        scenario_crew_update,
+    "threat-burst":       scenario_threat_burst,
+    "edge-anomaly":       scenario_edge_anomaly,
+    "attack-prediction":  scenario_attack_prediction,
+    "kg-investigation":   scenario_kg_investigation,
+    "schematic-create":   scenario_schematic_create,
 }
+
+SCENARIO_META = [
+    {"id": "schematic-search",  "label": "🔍 Schematic Q&A",       "agent": "ict-schematic-knowledge-retrieval", "hint": "Find all 138kV breaker schemes installed since 2018"},
+    {"id": "twin-drift",        "label": "🧬 Digital Twin Drift",  "agent": "ict-digital-twin-validation",       "hint": "Live load on feeder F-12 diverges 9% from twin prediction"},
+    {"id": "crew-update",       "label": "🗺️ Field Crew Update",   "agent": "ict-gis-adms-sync",                 "hint": "Crew rerouted conductor on span 33-7 — sync model"},
+    {"id": "threat-burst",      "label": "🛡️ OT Threat Burst",     "agent": "ict-cyber-threat-hunting",          "hint": "Lateral SMB spike between substations S-04 ↔ S-09"},
+    {"id": "edge-anomaly",      "label": "📡 Edge Anomaly",        "agent": "ict-edge-cyber-anomaly",            "hint": "RTU R-118 unsigned firmware update attempt"},
+    {"id": "attack-prediction", "label": "🎯 Attack Path",         "agent": "ict-predictive-attack-modeling",    "hint": "Recon phase on HMI — predict next steps"},
+    {"id": "kg-investigation",  "label": "🕸️ KG Pivot",            "agent": "ict-knowledge-graph-asset",         "hint": "Pivot from work-order WO-9821 to all related events"},
+    {"id": "schematic-create",  "label": "✏️ New Scheme Draft",    "agent": "ict-schematic-creation",            "hint": "Draft a one-line for a new 25kV recloser zone"},
+]
