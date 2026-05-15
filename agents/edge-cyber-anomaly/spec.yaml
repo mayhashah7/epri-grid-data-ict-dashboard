@@ -1,4 +1,0 @@
-name: ict-edge-cyber-anomaly
-model: gpt-5-mini
-description: "Lightweight ML on RTUs / meters / IEDs detecting traffic anomalies, firmware tampering, and unauthorized commands at the edge."
-tools: [open_case, list_recent_events, get_substation_status, query_meters]

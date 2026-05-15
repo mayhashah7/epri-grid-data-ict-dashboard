@@ -8,7 +8,7 @@ export default {
           bg: '#0a0e1a',
           panel: '#111827',
           border: '#1f2937',
-          accent: '#06b6d4',
+          accent: '#fbbf24',
           ok: '#10b981',
           warn: '#f59e0b',
           crit: '#ef4444',

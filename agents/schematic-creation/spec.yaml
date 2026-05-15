@@ -1,4 +1,0 @@
-name: ict-schematic-creation
-model: gpt-5-mini
-description: "Auto-generates schematics from requirements + standards. Optimizes layouts for cost, reliability, voltage drop, and protection coordination."
-tools: [open_case, list_recent_events, get_substation_status, query_meters]

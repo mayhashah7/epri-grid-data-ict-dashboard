@@ -15,21 +15,22 @@ from ami_tools.dispatch import handle_tool_call
 from .config import settings
 from .store import store
 
-ORCHESTRATOR_NAME = "ict-orchestrator"
+ORCHESTRATOR_NAME = "ami-orchestrator"
 
 # Full AMI agent fabric (12 total: orchestrator + 11 specialists)
 AGENT_ROSTER = [
-    {"name": "ict-orchestrator", "domain": "routing", "icon": "🧠", "color": "#06b6d4"},
-    {"name": "ict-asset-data-verification", "domain": "verification", "icon": "🧾", "color": "#22d3ee"},
-    {"name": "ict-schematic-knowledge-retrieval", "domain": "schematics", "icon": "🔍", "color": "#06b6d4"},
-    {"name": "ict-schematic-creation", "domain": "drafting", "icon": "✏️", "color": "#0ea5e9"},
-    {"name": "ict-gis-adms-sync", "domain": "sync", "icon": "🗺️", "color": "#14b8a6"},
-    {"name": "ict-digital-twin-validation", "domain": "twin", "icon": "🧬", "color": "#0d9488"},
-    {"name": "ict-data-exchange-streamlining", "domain": "exchange", "icon": "🔁", "color": "#7c3aed"},
-    {"name": "ict-knowledge-graph-asset", "domain": "kg", "icon": "🕸️", "color": "#a855f7"},
-    {"name": "ict-cyber-threat-hunting", "domain": "threat", "icon": "🛡️", "color": "#ef4444"},
-    {"name": "ict-edge-cyber-anomaly", "domain": "edge", "icon": "📡", "color": "#f97316"},
-    {"name": "ict-predictive-attack-modeling", "domain": "attack", "icon": "🎯", "color": "#dc2626"},
+    {"name": "ami-orchestrator",           "domain": "routing",       "icon": "🎯", "color": "#fbbf24"},
+    {"name": "ami-outage-detection",       "domain": "outage",        "icon": "🚨", "color": "#ef4444"},
+    {"name": "ami-theft-detection",        "domain": "theft",         "icon": "🕵️", "color": "#f97316"},
+    {"name": "ami-der-management",         "domain": "der",           "icon": "☀️", "color": "#facc15"},
+    {"name": "ami-demand-response",        "domain": "dr",            "icon": "⚡", "color": "#a855f7"},
+    {"name": "ami-predictive-maintenance", "domain": "maintenance",   "icon": "🔧", "color": "#0ea5e9"},
+    {"name": "ami-billing-anomaly",        "domain": "billing",       "icon": "💰", "color": "#10b981"},
+    {"name": "ami-customer-service",       "domain": "customer",      "icon": "💬", "color": "#94a3b8"},
+    {"name": "ami-grid-cybersecurity",     "domain": "security",      "icon": "🛡️", "color": "#dc2626"},
+    {"name": "ami-ev-load-orchestration",  "domain": "ev",            "icon": "🔌", "color": "#22d3ee"},
+    {"name": "ami-weather-impact",         "domain": "weather",       "icon": "🌦️", "color": "#60a5fa"},
+    {"name": "ami-tariff-optimization",    "domain": "tariff",        "icon": "📊", "color": "#34d399"},
 ]
 
 
@@ -146,24 +147,29 @@ class FoundryAgentRunner:
 
     async def _mock_chat(self, *, text: str, persona: str | None, case_id: str | None) -> AsyncIterator[dict]:
         text_l = text.lower()
-        # Routing decision (vertical-specific keyword fan-out)
-        _routes = [
-            (["asset", "data", "verification"], "verification", "ict-asset-data-verification"),
-            (["schematic", "knowledge", "retrieval"], "schematics", "ict-schematic-knowledge-retrieval"),
-            (["schematic", "creation"], "drafting", "ict-schematic-creation"),
-            (["adms", "sync"], "sync", "ict-gis-adms-sync"),
-            (["digital", "twin", "validation"], "twin", "ict-digital-twin-validation"),
-            (["data", "exchange", "streamlining"], "exchange", "ict-data-exchange-streamlining"),
-            (["knowledge", "graph", "asset"], "kg", "ict-knowledge-graph-asset"),
-            (["cyber", "threat", "hunting"], "threat", "ict-cyber-threat-hunting"),
-            (["edge", "cyber", "anomaly"], "edge", "ict-edge-cyber-anomaly"),
-            (["predictive", "attack", "modeling"], "attack", "ict-predictive-attack-modeling"),
-        ]
-        kind, target = "verification", "ict-asset-data-verification"
-        for kws, k, t in _routes:
-            if any(w in text_l for w in kws):
-                kind, target = k, t
-                break
+        # Routing decision (12-agent fabric)
+        if any(w in text_l for w in ["outage", "power out", "no power", "restore"]):
+            kind, target = "outage", "ami-outage-detection"
+        elif any(w in text_l for w in ["theft", "tamper", "bypass", "suspicious"]):
+            kind, target = "theft", "ami-theft-detection"
+        elif any(w in text_l for w in ["cyber", "intrusion", "anomalous traffic", "firmware", "spoof"]):
+            kind, target = "security", "ami-grid-cybersecurity"
+        elif any(w in text_l for w in ["ev ", "ev charger", "charging", "vehicle"]):
+            kind, target = "ev", "ami-ev-load-orchestration"
+        elif any(w in text_l for w in ["solar", "inverter", "backfeed", "volt-var", "der"]):
+            kind, target = "der", "ami-der-management"
+        elif any(w in text_l for w in ["demand response", "heat wave", "peak", "load shed", "shed"]):
+            kind, target = "dr", "ami-demand-response"
+        elif any(w in text_l for w in ["transformer", "harmonic", "maintenance", "aging"]):
+            kind, target = "maintenance", "ami-predictive-maintenance"
+        elif any(w in text_l for w in ["weather", "storm forecast", "temperature", "humidity"]):
+            kind, target = "weather", "ami-weather-impact"
+        elif any(w in text_l for w in ["tariff", "rate plan", "tou", "time of use", "pricing"]):
+            kind, target = "tariff", "ami-tariff-optimization"
+        elif any(w in text_l for w in ["bill", "charge", "amount"]):
+            kind, target = "billing", "ami-billing-anomaly"
+        else:
+            kind, target = "inquiry", "ami-customer-service"
 
         # Open case (or attach)
         if not case_id:
@@ -202,52 +208,213 @@ class FoundryAgentRunner:
         yield {"type": "final", "text": answer, "case_id": case_id}
 
     async def _mock_specialist(self, *, target: str, case_id: str, text: str, persona: str | None) -> AsyncIterator[dict]:
-        """Generic, vertical-aware specialist runner — grounds the answer in
-        live tool calls, then composes a markdown narrative. The deep
-        domain-specific reasoning runs on the live Foundry agent (see
-        _ensure_client / chat()); this mock is the fallback path."""
-        meta = next((a for a in AGENT_ROSTER if a["name"] == target), None)
-        domain = (meta or {}).get("domain", "general")
-        icon = (meta or {}).get("icon", "🤖")
-
-        events_args = {"limit": 3}
-        yield {"type": "tool_call", "name": "list_recent_events", "arguments": events_args}
-        events = handle_tool_call(store, "list_recent_events", events_args)
-        yield {"type": "tool_result", "name": "list_recent_events", "result": events}
-
         sub_id = self._extract_substation(text) or next(iter(store.substations), "S-01")
-        sub_args = {"substation_id": sub_id}
-        yield {"type": "tool_call", "name": "get_substation_status", "arguments": sub_args}
-        sub = handle_tool_call(store, "get_substation_status", sub_args)
-        yield {"type": "tool_result", "name": "get_substation_status", "result": sub}
 
-        ev_count = len(events.get("events", [])) if isinstance(events, dict) else 0
-        sub_load = (sub or {}).get("load_mw", "n/a")
-        sub_meters = (sub or {}).get("meter_count", "n/a")
+        if target == "ami-outage-detection":
+            tg = handle_tool_call(store, "group_outage_by_topology", {"substation_id": sub_id})
+            yield {"type": "tool_call", "name": "group_outage_by_topology", "arguments": {"substation_id": sub_id}}
+            yield {"type": "tool_result", "name": "group_outage_by_topology", "result": tg}
+            cc = handle_tool_call(store, "correlate_outage_calls", {"substation_id": sub_id, "time_window_min": 10})
+            yield {"type": "tool_result", "name": "correlate_outage_calls", "result": cc}
+            offline = tg.get("offline_total", 0)
+            if offline == 0:
+                handle_tool_call(store, "close_case", {"case_id": case_id, "summary": f"No active outages on {sub_id}.", "recommendation": "n/a"})
+                yield {"type": "answer", "text": (
+                    f"**No active outages on {sub_id}.**\n"
+                    f"All meters reporting; {cc['call_count']} customer calls in the last 10 minutes.\n"
+                    f"_(Tip: fire the 'Storm Outage' scenario to inject a feeder fault, then re-ask.)_"
+                )}
+                return
+            pr = handle_tool_call(store, "predict_restoration", {"scope": sub_id, "member_count": offline, "weather_severity": 0.4})
+            yield {"type": "tool_result", "name": "predict_restoration", "result": pr}
+            cd = handle_tool_call(store, "recommend_crew_dispatch", {"scope": sub_id, "eta_minutes": pr["eta_minutes"]})
+            yield {"type": "tool_result", "name": "recommend_crew_dispatch", "result": cd}
+            top = (tg.get("transformer_groups") or [{}])[0]
+            feeder_groups = tg.get("feeder_groups") or []
+            scope_desc = f"feeder **{feeder_groups[0]['feeder_id']}**" if feeder_groups else f"transformer **{top.get('transformer_id','?')}**"
+            ans = (
+                f"🚨 **Outage on {sub_id}** — {offline} meters offline, concentrated on {scope_desc}.\n"
+                f"• {cc['call_count']} customer calls in the last 10m corroborate the topology cluster.\n"
+                f"• Predicted restoration: **{pr['eta_minutes']}m** (confidence {int(pr['confidence']*100)}%).\n"
+                f"• Recommend dispatching **{cd['crew']}** — on-site ETA ~{cd['on_site_eta_minutes']}m."
+            )
+            handle_tool_call(store, "close_case", {"case_id": case_id, "summary": f"Outage on {sub_id}: {offline} meters offline.", "recommendation": f"{cd['crew']} → on-site ETA ~{cd['on_site_eta_minutes']}m"})
+            yield {"type": "answer", "text": ans}
 
-        handle_tool_call(store, "close_case", {
-            "case_id": case_id,
-            "summary": f"{target} processed request on {sub_id}.",
-            "recommendation": f"Forward to {domain} ops review.",
-        })
+        elif target == "ami-theft-detection":
+            r = handle_tool_call(store, "score_theft", {"scope": {"substation_id": sub_id}})
+            yield {"type": "tool_call", "name": "score_theft", "arguments": {"scope": {"substation_id": sub_id}}}
+            yield {"type": "tool_result", "name": "score_theft", "result": r}
+            suspects = r.get("suspects", [])
+            if not suspects:
+                ans = f"No theft-pattern meters above threshold on {sub_id} ({r.get('scored', 0)} meters scanned). Try the 'Theft Pattern' scenario to inject candidates."
+            else:
+                top = suspects[:3]
+                lines = "\n".join(f"• `{s['meter_id']}` — score **{s['score']}** · drivers: {', '.join(s['drivers'])} · last {s['last_kw']} kW vs cohort median {s['cohort_median_kw']}" for s in top)
+                ans = (
+                    f"🕵️ Found **{len(suspects)}** candidate theft cases on {sub_id}.\n"
+                    f"Top suspects:\n{lines}\n"
+                    f"_Recommendation: field inspection on the top 2; customer outreach for borderline scores._"
+                )
+            handle_tool_call(store, "close_case", {"case_id": case_id, "summary": f"{len(suspects)} theft candidates on {sub_id}.", "recommendation": "Top 3 → field inspection"})
+            yield {"type": "answer", "text": ans}
 
-        answer = f"""### {icon} `{target}` analysis
+        elif target == "ami-der-management":
+            r1 = handle_tool_call(store, "get_der_status", {"substation_id": sub_id})
+            yield {"type": "tool_result", "name": "get_der_status", "result": r1}
+            r2 = handle_tool_call(store, "recommend_volt_var", {"substation_id": sub_id, "affected_meters": r1.get("overvoltage_meters", [])})
+            yield {"type": "tool_result", "name": "recommend_volt_var", "result": r2}
+            curve = r2["proposed_curve"]
+            ans = (
+                f"☀️ **DER status on {sub_id}**: {r1['der_count']} DER meters · {r1['overvoltage_count']} over-voltage · net export **{r1['net_export_kw']} kW**.\n"
+                f"Recommend Volt-VAR curve update per IEEE 1547-2018:\n"
+                f"• V1={curve['V1_pu']} pu @ Q={curve['Q1_pct']}%   V2={curve['V2_pu']} pu @ Q={curve['Q2_pct']}%   dead-band ±{curve['V_dead_band_pu']} pu\n"
+                f"• Expected secondary-voltage drop: **{r2['expected_voltage_drop_pu']*100:.1f}%**."
+            )
+            handle_tool_call(store, "close_case", {"case_id": case_id, "summary": f"{r1['overvoltage_count']} DER meters over-voltage on {sub_id}.", "recommendation": json.dumps(curve)})
+            yield {"type": "answer", "text": ans}
 
-**Findings**
-- Scope: **{domain}** (case `{case_id}`)
-- Recent events surfaced: **{ev_count}** in the last window — via `list_recent_events`
-- Reference site **{sub_id}**: {sub_meters} endpoints, current load **{sub_load} MW** — via `get_substation_status`
+        elif target == "ami-demand-response":
+            r = handle_tool_call(store, "compute_demand_response", {"target_mw": 5, "window_minutes": 60, "cohort_filters": ["residential", "opt_in_DR"]})
+            yield {"type": "tool_result", "name": "compute_demand_response", "result": r}
+            ans = (
+                f"⚡ **DR event staged** ({r['target_mw']} MW target, {r['window_minutes']}m window):\n"
+                f"• Cohort: **{r['cohort_size']}** opt-in residential meters\n"
+                f"• Projected shed: **{r['projected_shed_mw']} MW** (p10 {r['shed_p10_mw']} · p90 {r['shed_p90_mw']})\n"
+                f"• Comfort impact: ~{r['comfort_temperature_rise_f']}°F indoor rise\n"
+                f"• Payment liability: **${r['payment_liability_usd']}**\n"
+                f"_Awaiting operator approval to dispatch._"
+            )
+            handle_tool_call(store, "close_case", {"case_id": case_id, "summary": f"DR event staged: {r['cohort_size']} meters → ~{r['projected_shed_mw']} MW.", "recommendation": f"Stage event; ${r['payment_liability_usd']}"})
+            yield {"type": "answer", "text": ans}
 
-**Drivers**
-- Two grounded tool calls (see trace) seeded this response.
-- The full domain reasoning runs on the live Foundry agent for `{target}` (model pinned per agent spec).
+        elif target == "ami-predictive-maintenance":
+            r = handle_tool_call(store, "score_transformer_health", {"substation_id": sub_id})
+            yield {"type": "tool_call", "name": "score_transformer_health", "arguments": {"substation_id": sub_id}}
+            yield {"type": "tool_result", "name": "score_transformer_health", "result": r}
+            worst = r.get("worst", [])
+            urgent = [t for t in worst if t["health"] < 30]
+            lines = "\n".join(f"• `{t['transformer_id']}` — health **{t['health']}/100** · load {t['load_pct']}% · THD {t['thd_pct']}% · drivers: {', '.join(t['drivers'])} → _{t['recommended_action']}_" for t in worst)
+            ans = (
+                f"🔧 **Transformer health on {sub_id}** ({r['transformer_count']} units scored):\n"
+                f"Bottom 5:\n{lines}\n"
+                f"\n**{len(urgent)}** transformer(s) need urgent inspection within 7 days."
+            )
+            handle_tool_call(store, "close_case", {"case_id": case_id, "summary": f"{len(urgent)} urgent transformers on {sub_id}.", "recommendation": "; ".join(f"{t['transformer_id']}={t['recommended_action']}" for t in worst[:3])})
+            yield {"type": "answer", "text": ans}
 
-**Recommended Action**
-- Open a follow-up work item against `{target}` referencing case `{case_id}`.
-- Forward telemetry trace to the {domain} review queue.
+        elif target == "ami-billing-anomaly":
+            sample_meter = next(iter(store.meters))
+            r = handle_tool_call(store, "detect_billing_anomaly", {"meter_id": sample_meter, "period_a": "2026-07", "period_b": "2026-08"})
+            yield {"type": "tool_result", "name": "detect_billing_anomaly", "result": r}
+            pct = round((r["period_b_kwh"] / r["period_a_kwh"] - 1) * 100, 1)
+            drivers = "\n".join(f"• {d['name'].replace('_',' ')}: **{d['share_pct']}%** (~${d['dollars']}){'  — '+d['note'] if d.get('note') else ''}" for d in r["drivers"])
+            ans = (
+                f"📊 **Bill change for `{sample_meter}`**: ${r['delta_dollars']} higher (+{pct}%, {r['period_a_kwh']} → {r['period_b_kwh']} kWh).\n"
+                f"Decomposition:\n{drivers}\n"
+                f"\n💡 **Recommendation:** {r['recommendation']}"
+            )
+            handle_tool_call(store, "close_case", {"case_id": case_id, "summary": f"Bill +${r['delta_dollars']} ({pct}%); weather-led.", "recommendation": r["recommendation"]})
+            yield {"type": "answer", "text": ans}
 
-**Confidence:** medium — grounded in 2 tool calls; production runs invoke the live Foundry specialist."""
-        yield {"type": "answer", "text": answer}
+        elif target == "ami-grid-cybersecurity":
+            # Synthetic but plausible — sample a few meters and pretend we ran an IDS pass
+            import random as _r
+            sub_meters = store.list_meters_in_substation(sub_id)
+            sample = _r.sample(sub_meters, min(8, len(sub_meters))) if sub_meters else []
+            findings = []
+            for m in sample[:3]:
+                findings.append({
+                    "meter_id": m["meter_id"],
+                    "signal": _r.choice(["unauthorized_firmware_query", "rapid_reauth_burst", "unsigned_command_attempt", "geo_anomalous_traffic"]),
+                    "severity": _r.choice(["low", "medium", "high"]),
+                    "src_asn": _r.choice(["AS15169", "AS8075", "AS13335"]),
+                })
+            crit = sum(1 for f in findings if f["severity"] == "high")
+            yield {"type": "tool_call", "name": "scan_grid_edge_traffic", "arguments": {"substation_id": sub_id}}
+            yield {"type": "tool_result", "name": "scan_grid_edge_traffic", "result": {"ok": True, "findings": findings, "scope": sub_id}}
+            handle_tool_call(store, "record_trace", {"case_id": case_id, "agent": target, "step": "scan", "status": "in_progress", "payload": {"findings": findings}})
+            lines = "\n".join(f"• `{f['meter_id']}` — **{f['signal']}** · severity {f['severity']} · src {f['src_asn']}" for f in findings) or "• (no anomalies detected in sample)"
+            ans = (
+                f"🛡️ **Grid-edge cybersecurity scan on {sub_id}** — {len(findings)} signal(s) of interest, {crit} high severity.\n"
+                f"{lines}\n"
+                f"_Recommendation: {'isolate suspect meters at NIC + open SOC ticket' if crit else 'continue passive monitoring; no action required'}_."
+            )
+            handle_tool_call(store, "close_case", {"case_id": case_id, "summary": f"{len(findings)} cyber signals on {sub_id}; {crit} high.", "recommendation": "Isolate + SOC ticket" if crit else "Monitor"})
+            yield {"type": "answer", "text": ans}
+
+        elif target == "ami-ev-load-orchestration":
+            evs = [m for m in store.list_meters_in_substation(sub_id) if m.get("persona") == "ev-owner"]
+            current_load_kw = sum((m.get("last_kw") or 0.0) for m in evs)
+            shiftable_kw = round(current_load_kw * 0.65, 1)
+            yield {"type": "tool_call", "name": "enumerate_ev_chargers", "arguments": {"substation_id": sub_id}}
+            yield {"type": "tool_result", "name": "enumerate_ev_chargers", "result": {"ok": True, "ev_count": len(evs), "current_load_kw": round(current_load_kw, 1)}}
+            handle_tool_call(store, "record_trace", {"case_id": case_id, "agent": target, "step": "enumerate", "status": "in_progress", "payload": {"ev_count": len(evs)}})
+            ans = (
+                f"🔌 **EV load on {sub_id}**: {len(evs)} EV-owner meters · current draw **{round(current_load_kw,1)} kW**.\n"
+                f"• Shiftable to off-peak window (00:00–05:00): **~{shiftable_kw} kW** ({int(shiftable_kw/max(current_load_kw,0.1)*100)}%)\n"
+                f"• Recommend a 2-hour 'pause + resume' nudge on opt-in chargers; expected $ impact for participants: $0.18/kWh saved.\n"
+                f"_Avoids ~{round(shiftable_kw*2/1000, 2)} MWh of evening peak._"
+            )
+            handle_tool_call(store, "close_case", {"case_id": case_id, "summary": f"{len(evs)} EVs on {sub_id}; ~{shiftable_kw} kW shiftable.", "recommendation": "Schedule off-peak nudge"})
+            yield {"type": "answer", "text": ans}
+
+        elif target == "ami-weather-impact":
+            # Build region label from substation
+            region = f"{sub_id}-zone"
+            w = handle_tool_call(store, "get_weather", {"region": region, "hours": 24})
+            yield {"type": "tool_result", "name": "get_weather", "result": w}
+            ss = handle_tool_call(store, "get_substation_status", {"substation_id": sub_id})
+            yield {"type": "tool_result", "name": "get_substation_status", "result": ss}
+            handle_tool_call(store, "record_trace", {"case_id": case_id, "agent": target, "step": "correlate", "status": "in_progress", "payload": {"cdd": w["cdd"], "load_kw": ss["total_kw"]}})
+            # Synthetic correlation
+            cooling_share = min(70, int(w["cdd"] * 4))
+            ans = (
+                f"🌦️ **Weather impact on {sub_id}** (last 24h):\n"
+                f"• Heat-index max: **{w['heat_index_max_f']}°F** · CDD: **{w['cdd']}**\n"
+                f"• Substation load: **{ss['total_kw']} kW** total across {ss['meter_count']} meters\n"
+                f"• Estimated cooling-driven share of load: **~{cooling_share}%**\n"
+                f"_Recommendation: pre-cool cohort 30 min before forecast peak (saves ~3% peak demand)._"
+            )
+            handle_tool_call(store, "close_case", {"case_id": case_id, "summary": f"Weather correlation: ~{cooling_share}% of {sub_id} load is cooling-driven.", "recommendation": "Pre-cool nudge"})
+            yield {"type": "answer", "text": ans}
+
+        elif target == "ami-tariff-optimization":
+            sample_meter = next(iter(store.meters))
+            m = handle_tool_call(store, "get_meter", {"meter_id": sample_meter})["meter"]
+            t = handle_tool_call(store, "get_tariff", {"meter_id": sample_meter})
+            n = handle_tool_call(store, "compare_to_neighbors", {"meter_id": sample_meter, "days": 30})
+            yield {"type": "tool_result", "name": "get_meter", "result": {"meter": m}}
+            yield {"type": "tool_result", "name": "get_tariff", "result": t}
+            yield {"type": "tool_result", "name": "compare_to_neighbors", "result": n}
+            handle_tool_call(store, "record_trace", {"case_id": case_id, "agent": target, "step": "evaluate", "status": "in_progress", "payload": {"current_tariff": t["tariff"]}})
+            est_savings = round(n["your_kwh"] * 0.024, 2)
+            ans = (
+                f"📊 **Tariff optimization for `{m['meter_id']}`** (currently **{t['tariff']}**):\n"
+                f"• Last 30 days: **{n['your_kwh']} kWh** (cohort median {n['cohort_median_kwh']} kWh, you're at p{int(n['percentile'])})\n"
+                f"• Switching to TOU-D5 with off-peak shifting → estimated savings **~${est_savings}/mo**\n"
+                f"• Best fit because: high evening usage, low weekend usage, opt-in eligible."
+            )
+            handle_tool_call(store, "close_case", {"case_id": case_id, "summary": f"Recommend TOU-D5 for `{m['meter_id']}` (~${est_savings}/mo savings).", "recommendation": "Enroll TOU-D5"})
+            yield {"type": "answer", "text": ans}
+
+        else:  # customer-service
+            sample_meter = next(iter(store.meters))
+            m = handle_tool_call(store, "get_meter", {"meter_id": sample_meter})["meter"]
+            ss = handle_tool_call(store, "get_substation_status", {"substation_id": m["substation_id"]})
+            yield {"type": "tool_result", "name": "get_meter", "result": {"meter": m}}
+            yield {"type": "tool_result", "name": "get_substation_status", "result": ss}
+            status = "✅ Power is on" if m.get("online") else "⚠️ Power is currently OUT"
+            ans = (
+                f"{status} for meter `{m['meter_id']}` ({m['persona']} on tariff {m['tariff']}).\n"
+                f"• Last reading: **{m['last_kw']} kW** at **{m['last_voltage']} V**.\n"
+                f"• Substation **{m['substation_id']}** is currently serving {ss['meter_count']} meters · "
+                f"{ss['offline_count']} offline · {ss['total_kw']} kW total.\n"
+                f"_Anything else I can help with?_"
+            )
+            handle_tool_call(store, "close_case", {"case_id": case_id, "summary": "Customer Q&A answered with grounded meter data.", "recommendation": "n/a"})
+            yield {"type": "answer", "text": ans}
+
 
 runner = FoundryAgentRunner()
 
@@ -256,15 +423,15 @@ runner = FoundryAgentRunner()
 
 # Maps scenario `kind` → an orchestrator-style chat prompt that triggers the
 # right specialist with the right substation context.
-EVENT_TO_PROMPT: dict[str, tuple[str, str]] = {
-    "schematic-search": ("Find all 138kV breaker schemes installed since 2018", "ict-schematic-knowledge-retrieval"),
-    "twin-drift": ("Live load on feeder F-12 diverges 9% from twin prediction", "ict-digital-twin-validation"),
-    "crew-update": ("Crew rerouted conductor on span 33-7 — sync model", "ict-gis-adms-sync"),
-    "threat-burst": ("Spike in lateral SMB traffic between substations S-04 ↔ S-09", "ict-cyber-threat-hunting"),
-    "edge-anomaly": ("RTU R-118 reporting unsigned firmware update attempt", "ict-edge-cyber-anomaly"),
-    "attack-prediction": ("Recon phase observed on HMI — predict next steps", "ict-predictive-attack-modeling"),
-    "kg-investigation": ("Pivot from work-order WO-9821 to all related events", "ict-knowledge-graph-asset"),
-    "schematic-create": ("Draft a one-line for a new 25kV recloser zone", "ict-schematic-creation"),
+EVENT_TO_PROMPT = {
+    "outage":             "There is an active outage on substation {substation_id}. Triage and recommend dispatch.",
+    "tamper":             "Suspicious tamper readings reported on substation {substation_id}. Hunt for theft.",
+    "der_overvoltage":    "Solar backfeed overvoltage detected on substation {substation_id}. Recommend Volt-VAR.",
+    "load_forecast_high": "Heat-wave demand forecast triggered. Plan a 5 MW DR event for the next hour.",
+    "transformer_health": "Run transformer health on substation {substation_id}.",
+    "cyber":              "Cybersecurity anomaly burst on substation {substation_id}. Scan grid edge.",
+    "ev_surge":           "EV charging surge on substation {substation_id}. Optimize the load.",
+    "weather_alert":      "Weather alert flagged for substation {substation_id}. Correlate impact.",
 }
 
 

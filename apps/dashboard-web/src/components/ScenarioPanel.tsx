@@ -35,7 +35,7 @@ export function ScenarioPanel({ onRan, substations }: { onRan: () => void; subst
     <div className="h-full flex flex-col">
       <div className="flex items-baseline justify-between mb-2">
         <h2 className="text-sm font-semibold tracking-wide">SCENARIOS</h2>
-        <span className="text-[10px] text-slate-500">click to inject + auto-dispatch agent</span>
+        <span className="text-xs text-slate-500">click to inject + auto-dispatch agent</span>
       </div>
       <div className="grid grid-cols-4 gap-1.5 flex-1 overflow-y-auto">
         {SCENARIOS.map(s => (
@@ -47,12 +47,12 @@ export function ScenarioPanel({ onRan, substations }: { onRan: () => void; subst
             title={s.hint}
           >
             <div className="text-xs font-medium text-grid-accent leading-tight">{busy === s.id ? '⏳' : s.label}</div>
-            <div className="text-[9px] text-grid-info font-mono mt-0.5">→ ami-{s.agent}</div>
-            <div className="text-[9px] text-slate-500 mt-0.5 line-clamp-1">{s.hint}</div>
+            <div className="text-xs text-grid-info font-mono mt-0.5">→ ami-{s.agent}</div>
+            <div className="text-xs text-slate-500 mt-0.5 line-clamp-1">{s.hint}</div>
           </button>
         ))}
       </div>
-      {last && <div className="text-[10px] text-grid-ok mt-1 truncate font-mono">{last}</div>}
+      {last && <div className="text-xs text-grid-ok mt-1 truncate font-mono">{last}</div>}
     </div>
   );
 }

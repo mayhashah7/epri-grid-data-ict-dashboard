@@ -73,12 +73,12 @@ export function ChatPanel({ onAgentActive }: ChatPanelProps = {}) {
           <button
             onClick={() => setMsgs([])}
             title="Clear chat"
-            className="text-[10px] px-1.5 py-0.5 border border-grid-border rounded hover:border-grid-accent text-slate-400"
+            className="text-xs px-1.5 py-0.5 border border-grid-border rounded hover:border-grid-accent text-slate-400"
           >clear</button>
           <select
             value={persona}
             onChange={e => changePersona(e.target.value as Persona)}
-            className="text-[10px] bg-grid-bg border border-grid-border rounded px-1 py-0.5"
+            className="text-xs bg-grid-bg border border-grid-border rounded px-1 py-0.5"
           >
             <option value="operator">operator</option>
             <option value="planner">planner</option>
@@ -91,14 +91,14 @@ export function ChatPanel({ onAgentActive }: ChatPanelProps = {}) {
           <div className="space-y-1">
             <div className="text-slate-500 mb-1">As <span className="text-grid-accent">{persona}</span>, try:</div>
             {STARTERS[persona].map(s => (
-              <button key={s} onClick={() => send(s)} className="block text-left text-[11px] text-grid-info hover:text-grid-accent">• {s}</button>
+              <button key={s} onClick={() => send(s)} className="block text-left text-xs text-grid-info hover:text-grid-accent">• {s}</button>
             ))}
           </div>
         )}
         {msgs.map((m, i) => (
           <div key={i} className={
             m.role === 'user' ? 'text-slate-200 bg-grid-bg p-1.5 rounded'
-            : m.role === 'tool' ? 'text-[10px] text-grid-info font-mono'
+            : m.role === 'tool' ? 'text-xs text-grid-info font-mono'
             : 'text-emerald-300 bg-emerald-500/10 p-1.5 rounded border border-emerald-500/20 whitespace-pre-wrap'
           }>
             {m.text}

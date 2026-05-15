@@ -33,7 +33,7 @@ export function AgentRoster({ activeNames }: { activeNames: Set<string> }) {
           return (
             <div
               key={a.name}
-              className={`p-1.5 rounded-md border text-[10px] font-mono transition ${
+              className={`p-1.5 rounded-md border text-xs font-mono transition ${
                 active
                   ? 'border-grid-accent bg-grid-accent/10 text-grid-accent shadow-[0_0_12px_rgba(251,191,36,0.4)]'
                   : 'border-grid-border bg-grid-bg text-slate-400'
@@ -46,13 +46,13 @@ export function AgentRoster({ activeNames }: { activeNames: Set<string> }) {
                 {active && <span className="ml-auto w-1.5 h-1.5 bg-grid-accent rounded-full animate-pulse" />}
               </div>
               <div className="flex items-center gap-1 mt-1">
-                <span className={`px-1 rounded text-[8px] font-semibold ${modelBadgeColor(a.model)}`}>
+                <span className={`px-1 rounded text-xs font-semibold ${modelBadgeColor(a.model)}`}>
                   {a.model || 'mock'}
                 </span>
                 {a.registered ? (
-                  <span className="text-[8px] text-emerald-400">●live</span>
+                  <span className="text-xs text-emerald-400">●live</span>
                 ) : (
-                  <span className="text-[8px] text-slate-600">○offline</span>
+                  <span className="text-xs text-slate-600">○offline</span>
                 )}
               </div>
             </div>

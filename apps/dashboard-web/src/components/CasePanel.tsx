@@ -36,25 +36,25 @@ export function CasePanel({ cases, layout = 'vertical' }: { cases: Case[]; layou
           <div key={c.case_id} className={`rounded-lg border border-grid-border bg-grid-bg overflow-hidden ${layout === 'horizontal' ? 'min-w-[280px] max-w-[320px] shrink-0' : ''}`}>
             <button onClick={() => setOpenId(openId === c.case_id ? null : c.case_id)} className="w-full text-left p-2 hover:bg-grid-border/40">
               <div className="flex items-center gap-2">
-                <span className={`text-[10px] px-1.5 py-0.5 rounded border ${KIND_COLOR[c.kind] ?? KIND_COLOR.inquiry}`}>{c.kind.toUpperCase()}</span>
+                <span className={`text-xs px-1.5 py-0.5 rounded border ${KIND_COLOR[c.kind] ?? KIND_COLOR.inquiry}`}>{c.kind.toUpperCase()}</span>
                 <span className="text-xs text-slate-400 font-mono truncate">{c.case_id}</span>
-                <span className={`ml-auto text-[10px] ${c.status === 'resolved' ? 'text-grid-ok' : 'text-grid-warn'}`}>{c.status}</span>
+                <span className={`ml-auto text-xs ${c.status === 'resolved' ? 'text-grid-ok' : 'text-grid-warn'}`}>{c.status}</span>
               </div>
               <div className="text-sm mt-1 line-clamp-2">{c.summary}</div>
-              {c.recommendation && <div className="text-[11px] text-slate-400 mt-1 line-clamp-2">↳ {c.recommendation}</div>}
+              {c.recommendation && <div className="text-xs text-slate-400 mt-1 line-clamp-2">↳ {c.recommendation}</div>}
             </button>
             {openId === c.case_id && (
               <div className="px-2 pb-2 border-t border-grid-border bg-black/30 max-h-56 overflow-y-auto">
-                {traces.length === 0 && <div className="text-[11px] text-slate-500 py-1">no traces yet…</div>}
+                {traces.length === 0 && <div className="text-xs text-slate-500 py-1">no traces yet…</div>}
                 {traces.map((t, i) => (
-                  <div key={i} className="text-[11px] py-1 border-b border-grid-border/40 last:border-0">
+                  <div key={i} className="text-xs py-1 border-b border-grid-border/40 last:border-0">
                     <div className="flex items-center gap-2">
                       <span className="text-grid-info">{t.agent}</span>
                       <span className="text-slate-400">{t.step}</span>
                       <span className={`ml-auto ${t.status === 'resolved' ? 'text-grid-ok' : 'text-grid-warn'}`}>{t.status}</span>
                     </div>
                     {t.payload && Object.keys(t.payload).length > 0 && (
-                      <pre className="text-[10px] text-slate-500 mt-0.5 whitespace-pre-wrap break-all font-mono">{JSON.stringify(t.payload).slice(0, 240)}</pre>
+                      <pre className="text-xs text-slate-500 mt-0.5 whitespace-pre-wrap break-all font-mono">{JSON.stringify(t.payload).slice(0, 240)}</pre>
                     )}
                   </div>
                 ))}
