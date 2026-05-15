@@ -168,7 +168,7 @@ class ScenarioReq(BaseModel):
     count: int | None = None
 
 
-@app.get("/api/scenario-meta")  # separate path avoids conflict with /{name}
+@app.get("/api/scenarios")
 async def list_scenarios() -> list[dict]:
     return [
         {"id": "schematic-search",  "label": "🔍 Schematic Q&A",      "agent": "ict-schematic-knowledge-retrieval", "hint": "Find all 138kV breaker schemes installed since 2018"},

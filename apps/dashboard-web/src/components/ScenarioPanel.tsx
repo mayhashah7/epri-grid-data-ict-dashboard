@@ -15,7 +15,7 @@ export function ScenarioPanel({ onRan, substations }: { onRan: () => void; subst
   const sub = substations[0]?.substation_id ?? '';
 
   useEffect(() => {
-    fetch('/api/scenario-meta')
+    fetch('/api/scenarios')
       .then(r => r.json())
       .then(setScenarios)
       .catch(() => {});

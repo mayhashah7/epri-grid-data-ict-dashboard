@@ -345,68 +345,6 @@ class FoundryAgentRunner:
             )
             handle_tool_call(store, "close_case", {"case_id": case_id, "summary": f"3 nameplate mismatches on {sub_id}.", "recommendation": "Field re-inspection"})
             yield {"type": "answer", "text": ans}
-            tg = handle_tool_call(store, "group_outage_by_topology", {"substation_id": sub_id})
-            yield {"type": "tool_call", "name": "group_outage_by_topology", "arguments": {"substation_id": sub_id}}
-            yield {"type": "tool_result", "name": "group_outage_by_topology", "result": tg}
-            cc = handle_tool_call(store, "correlate_outage_calls", {"substation_id": sub_id, "time_window_min": 10})
-            yield {"type": "tool_result", "name": "correlate_outage_calls", "result": cc}
-            offline = tg.get("offline_total", 0)
-            if offline == 0:
-                handle_tool_call(store, "close_case", {"case_id": case_id, "summary": f"No active outages on {sub_id}.", "recommendation": "n/a"})
-                yield {"type": "answer", "text": (
-                    f"**No active outages on {sub_id}.**\n"
-                    f"All meters reporting; {cc['call_count']} customer calls in the last 10 minutes.\n"
-                    f"_(Tip: fire the 'Storm Outage' scenario to inject a feeder fault, then re-ask.)_"
-                )}
-                return
-            pr = handle_tool_call(store, "predict_restoration", {"scope": sub_id, "member_count": offline, "weather_severity": 0.4})
-            yield {"type": "tool_result", "name": "predict_restoration", "result": pr}
-            cd = handle_tool_call(store, "recommend_crew_dispatch", {"scope": sub_id, "eta_minutes": pr["eta_minutes"]})
-            yield {"type": "tool_result", "name": "recommend_crew_dispatch", "result": cd}
-            top = (tg.get("transformer_groups") or [{}])[0]
-            feeder_groups = tg.get("feeder_groups") or []
-            scope_desc = f"feeder **{feeder_groups[0]['feeder_id']}**" if feeder_groups else f"transformer **{top.get('transformer_id','?')}**"
-            ans = (
-                f"🚨 **Outage on {sub_id}** — {offline} meters offline, concentrated on {scope_desc}.\n"
-                f"• {cc['call_count']} customer calls in the last 10m corroborate the topology cluster.\n"
-                f"• Predicted restoration: **{pr['eta_minutes']}m** (confidence {int(pr['confidence']*100)}%).\n"
-                f"• Recommend dispatching **{cd['crew']}** — on-site ETA ~{cd['on_site_eta_minutes']}m."
-            )
-            handle_tool_call(store, "close_case", {"case_id": case_id, "summary": f"Outage on {sub_id}: {offline} meters offline.", "recommendation": f"{cd['crew']} → on-site ETA ~{cd['on_site_eta_minutes']}m"})
-            yield {"type": "answer", "text": ans}
-
-        elif target == "ami-theft-detection":
-            r = handle_tool_call(store, "score_theft", {"scope": {"substation_id": sub_id}})
-            yield {"type": "tool_call", "name": "score_theft", "arguments": {"scope": {"substation_id": sub_id}}}
-            yield {"type": "tool_result", "name": "score_theft", "result": r}
-            suspects = r.get("suspects", [])
-            if not suspects:
-                ans = f"No theft-pattern meters above threshold on {sub_id} ({r.get('scored', 0)} meters scanned). Try the 'Theft Pattern' scenario to inject candidates."
-            else:
-                top = suspects[:3]
-                lines = "\n".join(f"• `{s['meter_id']}` — score **{s['score']}** · drivers: {', '.join(s['drivers'])} · last {s['last_kw']} kW vs cohort median {s['cohort_median_kw']}" for s in top)
-                ans = (
-                    f"🕵️ Found **{len(suspects)}** candidate theft cases on {sub_id}.\n"
-                    f"Top suspects:\n{lines}\n"
-                    f"_Recommendation: field inspection on the top 2; customer outreach for borderline scores._"
-                )
-            handle_tool_call(store, "close_case", {"case_id": case_id, "summary": f"{len(suspects)} theft candidates on {sub_id}.", "recommendation": "Top 3 → field inspection"})
-            yield {"type": "answer", "text": ans}
-
-        elif target == "ami-der-management":
-            r1 = handle_tool_call(store, "get_der_status", {"substation_id": sub_id})
-            yield {"type": "tool_result", "name": "get_der_status", "result": r1}
-            r2 = handle_tool_call(store, "recommend_volt_var", {"substation_id": sub_id, "affected_meters": r1.get("overvoltage_meters", [])})
-            yield {"type": "tool_result", "name": "recommend_volt_var", "result": r2}
-            curve = r2["proposed_curve"]
-            ans = (
-                f"☀️ **DER status on {sub_id}**: {r1['der_count']} DER meters · {r1['overvoltage_count']} over-voltage · net export **{r1['net_export_kw']} kW**.\n"
-                f"Recommend Volt-VAR curve update per IEEE 1547-2018:\n"
-                f"• V1={curve['V1_pu']} pu @ Q={curve['Q1_pct']}%   V2={curve['V2_pu']} pu @ Q={curve['Q2_pct']}%   dead-band ±{curve['V_dead_band_pu']} pu\n"
-                f"• Expected secondary-voltage drop: **{r2['expected_voltage_drop_pu']*100:.1f}%**."
-            )
-            handle_tool_call(store, "close_case", {"case_id": case_id, "summary": f"{r1['overvoltage_count']} DER meters over-voltage on {sub_id}.", "recommendation": json.dumps(curve)})
-            yield {"type": "answer", "text": ans}
 
 
 
