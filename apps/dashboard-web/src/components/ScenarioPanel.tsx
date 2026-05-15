@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { postJson, type Substation } from '../lib/api';
+import { postJson, API_BASE, type Substation } from '../lib/api';
 
 interface ScenarioMeta {
   id: string;
@@ -15,7 +15,7 @@ export function ScenarioPanel({ onRan, substations }: { onRan: () => void; subst
   const sub = substations[0]?.substation_id ?? '';
 
   useEffect(() => {
-    fetch('/api/scenarios')
+    fetch(API_BASE + '/api/scenarios')
       .then(r => r.json())
       .then(setScenarios)
       .catch(() => {});
