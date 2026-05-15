@@ -2,14 +2,14 @@ import { useState } from 'react';
 import { postJson, type Substation } from '../lib/api';
 
 const SCENARIOS = [
-  { id: 'storm-outage',     label: '⛈️ Storm Outage',         agent: 'outage-detection',       hint: 'Knocks a feeder offline' },
-  { id: 'theft',            label: '🕵️ Theft Pattern',        agent: 'theft-detection',        hint: 'Plant tampers + flat reads' },
-  { id: 'der-overvoltage',  label: '☀️ Solar Backfeed',       agent: 'der-management',         hint: 'Volt-VAR risk on secondaries' },
-  { id: 'heat-wave',        label: '🔥 Heat Wave',            agent: 'demand-response',        hint: 'Trigger DR cohort selection' },
-  { id: 'transformer-aging',label: '🔧 Transformer Aging',    agent: 'predictive-maintenance', hint: 'Score asset health' },
-  { id: 'cyber-burst',      label: '🛡️ Cyber Anomaly',        agent: 'grid-cybersecurity',     hint: 'Unauthorized firmware queries' },
-  { id: 'ev-surge',         label: '🔌 EV Plug-in Surge',     agent: 'ev-load-orchestration',  hint: 'Evening EV charging burst' },
-  { id: 'weather-alert',    label: '🌦️ Weather Alert',         agent: 'weather-impact',         hint: 'Heat warning + storm watch' },
+  { id: 'schematic-search', label: 'Schematic Q&A', agent: 'ict-schematic-knowledge-retrieval', hint: 'Find all 138kV breaker schemes installed since 2018' },
+  { id: 'twin-drift', label: 'Digital Twin Drift', agent: 'ict-digital-twin-validation', hint: 'Live load on feeder F-12 diverges 9% from twin prediction' },
+  { id: 'crew-update', label: 'Field Crew Update', agent: 'ict-gis-adms-sync', hint: 'Crew rerouted conductor on span 33-7 — sync model' },
+  { id: 'threat-burst', label: 'OT Threat Burst', agent: 'ict-cyber-threat-hunting', hint: 'Spike in lateral SMB traffic between substations S-04 ↔ S-09' },
+  { id: 'edge-anomaly', label: 'Edge Anomaly', agent: 'ict-edge-cyber-anomaly', hint: 'RTU R-118 reporting unsigned firmware update attempt' },
+  { id: 'attack-prediction', label: 'Attack Path Prediction', agent: 'ict-predictive-attack-modeling', hint: 'Recon phase observed on HMI — predict next steps' },
+  { id: 'kg-investigation', label: 'Knowledge Graph Pivot', agent: 'ict-knowledge-graph-asset', hint: 'Pivot from work-order WO-9821 to all related events' },
+  { id: 'schematic-create', label: 'New Scheme Draft', agent: 'ict-schematic-creation', hint: 'Draft a one-line for a new 25kV recloser zone' },
 ];
 
 export function ScenarioPanel({ onRan, substations }: { onRan: () => void; substations: Substation[] }) {
@@ -47,7 +47,7 @@ export function ScenarioPanel({ onRan, substations }: { onRan: () => void; subst
             title={s.hint}
           >
             <div className="text-xs font-medium text-grid-accent leading-tight">{busy === s.id ? '⏳' : s.label}</div>
-            <div className="text-xs text-grid-info font-mono mt-0.5">→ ami-{s.agent}</div>
+            <div className="text-xs text-grid-info font-mono mt-0.5">→ {s.agent}</div>
             <div className="text-xs text-slate-500 mt-0.5 line-clamp-1">{s.hint}</div>
           </button>
         ))}
