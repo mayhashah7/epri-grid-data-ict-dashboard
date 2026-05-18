@@ -70,7 +70,7 @@ export default function App() {
               return [m.data, ...others].slice(0, 30);
             });
             if (m.data.routed_to) pulseAgent(m.data.routed_to);
-            pulseAgent('ami-orchestrator');
+            pulseAgent('ict-orchestrator');
           } else if (m.type === 'trace') {
             pulseAgent(m.data.agent);
             pushActivity({
