@@ -42,7 +42,7 @@ export function AgentRoster({ activeNames }: { activeNames: Set<string> }) {
             >
               <div className="flex items-center gap-1">
                 <span style={{ color: a.color }} className="text-sm">{a.icon}</span>
-                <span className="truncate">{a.name.replace('ami-', '')}</span>
+                <span className="truncate">{a.name.replace(/^[a-z]+-/, '')}</span>
                 {active && <span className="ml-auto w-1.5 h-1.5 bg-grid-accent rounded-full animate-pulse" />}
               </div>
               <div className="flex items-center gap-1 mt-1">

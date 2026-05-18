@@ -176,7 +176,7 @@ async def simulator_loop() -> None:
             await tick_reads()
         except Exception as e:  # noqa: BLE001
             print(f"[simulator] tick error: {e}")
-        await asyncio.sleep(2.0)
+        await asyncio.sleep(1.5)
 
 
 # ── Scenarios ──────────────────────────────────────────────────────────────

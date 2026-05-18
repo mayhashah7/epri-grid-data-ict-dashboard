@@ -7,9 +7,11 @@ import { ChatPanel } from './components/ChatPanel';
 import { TopBar } from './components/TopBar';
 import { AgentRoster } from './components/AgentRoster';
 import { ActivityFeed } from './components/ActivityFeed';
-import { WS_URL, getJson, type Substation, type Case } from './lib/api';
+import { ScenarioToast, type ToastData } from './components/ScenarioToast';
+import { WS_URL, getJson, postJson, type Substation, type Case } from './lib/api';
 
 type ActivityItem = { id: string; agent?: string; tool?: string; text: string; ts: number };
+type WsStatus = { connected: boolean; reconnecting: boolean };
 
 export default function App() {
   const [subs, setSubs] = useState<Substation[]>([]);
@@ -19,7 +21,15 @@ export default function App() {
   const [foundryConfigured, setFoundryConfigured] = useState<boolean>(false);
   const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [activeAgents, setActiveAgents] = useState<Set<string>>(new Set());
-  const decayTimers = useRef<Map<string, number>>(new Map());
+  const [wsStatus, setWsStatus] = useState<WsStatus>({ connected: false, reconnecting: false });
+  const [toast, setToast] = useState<ToastData | null>(null);
+  const decayTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+
+  const totalMeters = subs.reduce((s, sub) => s + sub.meter_count, 0);
+  const offlineMeters = subs.reduce((s, sub) => s + sub.offline_count, 0);
+  const onlineMetricsPct = totalMeters > 0 ? ((totalMeters - offlineMeters) / totalMeters) * 100 : 100;
+  const activeCases = cases.filter(c => c.status !== 'resolved').length;
+  const resolvedCases = cases.filter(c => c.status === 'resolved').length;
 
   useEffect(() => {
     getJson<{ foundry_configured: boolean }>('/api/health').then(h => setFoundryConfigured(h.foundry_configured)).catch(() => {});
@@ -28,14 +38,10 @@ export default function App() {
   }, []);
 
   function pulseAgent(name: string) {
-    setActiveAgents(prev => {
-      const next = new Set(prev);
-      next.add(name);
-      return next;
-    });
+    setActiveAgents(prev => { const n = new Set(prev); n.add(name); return n; });
     const prev = decayTimers.current.get(name);
     if (prev) clearTimeout(prev);
-    const t = window.setTimeout(() => {
+    const t = setTimeout(() => {
       setActiveAgents(p => { const n = new Set(p); n.delete(name); return n; });
       decayTimers.current.delete(name);
     }, 4000);
@@ -46,11 +52,24 @@ export default function App() {
     setActivity(prev => [...prev, item].slice(-200));
   }
 
+  async function handleReset() {
+    try {
+      await postJson<any>('/api/reset', {});
+      setCases([]);
+      setActivity([]);
+      setActiveAgents(new Set());
+      const subs2 = await getJson<Substation[]>('/api/substations');
+      setSubs(subs2);
+    } catch { /* ignore */ }
+  }
+
   useEffect(() => {
     let ws: WebSocket | null = null;
     let stopped = false;
     function connect() {
+      setWsStatus({ connected: false, reconnecting: true });
       ws = new WebSocket(WS_URL);
+      ws.onopen = () => setWsStatus({ connected: true, reconnecting: false });
       ws.onmessage = ev => {
         try {
           const m = JSON.parse(ev.data);
@@ -74,24 +93,25 @@ export default function App() {
           } else if (m.type === 'trace') {
             pulseAgent(m.data.agent);
             pushActivity({
-              id: m.data.id ?? `${Date.now()}-${Math.random()}`,
+              id: m.data.id ?? ${"$"}{Date.now()}-{Math.random()},
               agent: m.data.agent,
               tool: m.data.step,
-              text: m.data.agent.replace('ami-', ''),
+              text: m.data.agent.replace(/^[a-z]+-/, ''),
               ts: Date.now(),
             });
           } else if (m.type === 'agent_activity') {
             const d = m.data;
             if (d.type === 'tool_call') {
+              if (d.arguments?.target_agent) pulseAgent(d.arguments.target_agent);
               pushActivity({
-                id: `${Date.now()}-${Math.random()}`,
+                id: ${"$"}{Date.now()}-{Math.random()},
                 tool: d.name,
-                text: JSON.stringify(d.arguments).slice(0, 60),
+                text: JSON.stringify(d.arguments ?? {}).slice(0, 60),
                 ts: Date.now(),
               });
             } else if (d.type === 'final' || d.type === 'answer') {
               pushActivity({
-                id: `${Date.now()}-${Math.random()}`,
+                id: ${"$"}{Date.now()}-{Math.random()},
                 text: '✓ ' + (d.text ?? '').replace(/\n/g, ' ').slice(0, 80),
                 ts: Date.now(),
               });
@@ -101,7 +121,10 @@ export default function App() {
           }
         } catch { /* ignore */ }
       };
-      ws.onclose = () => { if (!stopped) setTimeout(connect, 2000); };
+      ws.onclose = () => {
+        setWsStatus({ connected: false, reconnecting: false });
+        if (!stopped) setTimeout(connect, 2000);
+      };
     }
     connect();
     return () => { stopped = true; ws?.close(); };
@@ -109,39 +132,41 @@ export default function App() {
 
   return (
     <div className="h-full flex flex-col">
-      <TopBar systemKw={systemKw} substations={subs.length} foundry={foundryConfigured} agentCount={12} />
+      <ScenarioToast toast={toast} />
+      <TopBar
+        systemKw={systemKw}
+        substations={subs.length}
+        foundry={foundryConfigured}
+        agentCount={10}
+        activeCases={activeCases}
+        resolvedCases={resolvedCases}
+        onlineMetricsPct={onlineMetricsPct}
+        wsStatus={wsStatus}
+        onReset={handleReset}
+      />
       <div className="flex-1 grid grid-cols-12 grid-rows-12 gap-2 p-2 overflow-hidden">
-        {/* Map - top left */}
         <div className="col-span-6 row-span-7 bg-grid-panel border border-grid-border rounded-xl overflow-hidden min-h-0">
           <GridMap substations={subs} />
         </div>
-
-        {/* Agent Roster - top middle */}
         <div className="col-span-3 row-span-7 bg-grid-panel border border-grid-border rounded-xl p-3 overflow-hidden flex flex-col">
           <AgentRoster activeNames={activeAgents} />
         </div>
-
-        {/* Chat - top right */}
         <div className="col-span-3 row-span-7 bg-grid-panel border border-grid-border rounded-xl p-3 overflow-hidden flex flex-col">
           <ChatPanel onAgentActive={pulseAgent} />
         </div>
-
-        {/* Scenarios - bottom left wide */}
         <div className="col-span-6 row-span-3 bg-grid-panel border border-grid-border rounded-xl p-3 overflow-hidden">
-          <ScenarioPanel onRan={() => getJson<Case[]>('/api/cases').then(setCases)} substations={subs} />
+          <ScenarioPanel
+            onRan={() => getJson<Case[]>('/api/cases').then(setCases)}
+            substations={subs}
+            onToast={setToast}
+          />
         </div>
-
-        {/* Load chart - bottom middle */}
         <div className="col-span-3 row-span-3 bg-grid-panel border border-grid-border rounded-xl p-3 overflow-hidden">
           <LoadChart history={tickHistory} />
         </div>
-
-        {/* Activity feed - bottom right */}
         <div className="col-span-3 row-span-3 bg-grid-panel border border-grid-border rounded-xl p-3 overflow-hidden">
-          <ActivityFeed items={activity} />
+          <ActivityFeed items={activity} onClear={() => setActivity([])} />
         </div>
-
-        {/* Cases - very bottom full width */}
         <div className="col-span-12 row-span-2 bg-grid-panel border border-grid-border rounded-xl p-3 overflow-hidden">
           <CasePanel cases={cases} layout="horizontal" />
         </div>

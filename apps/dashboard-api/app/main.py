@@ -196,6 +196,42 @@ async def run_scenario(name: str, req: ScenarioReq | None = None) -> dict:
     return await fn(**kwargs)
 
 
+
+# -- KPIs / Reset ---------------------------------------------------------------
+
+
+@app.get("/api/kpis")
+async def get_kpis() -> dict:
+    total = len(store.meters)
+    offline = sum(1 for m in store.meters.values() if not m.get("online", True))
+    all_cases = list(store.cases.values())
+    active = [c for c in all_cases if c.get("status") != "resolved"]
+    resolved = [c for c in all_cases if c.get("status") == "resolved"]
+    return {
+        "total_meters": total,
+        "online_pct": round((total - offline) / total * 100, 1) if total else 100.0,
+        "active_cases": len(active),
+        "resolved_cases": len(resolved),
+    }
+
+
+@app.post("/api/reset")
+async def reset_demo() -> dict:
+    """Reset all simulator state for a clean demo."""
+    store.cases.clear()
+    store.events.clear()
+    for tid in list(store.traces_by_case.keys()):
+        del store.traces_by_case[tid]
+    for m in store.meters.values():
+        m["online"] = True
+        m["tamper_flag"] = False
+        m["theft_active"] = False
+        m["flat_overnight"] = False
+        m["last_kw"] = m.get("baseline_kw", 0.5)
+        m["last_voltage"] = 120.0
+    await store.broadcast({"type": "snapshot", "data": {"cases": [], "events": []}})
+    return {"status": "reset"}
+
 # ── Chat ──────────────────────────────────────────────────────────────────
 
 
@@ -239,3 +275,4 @@ async def ws_stream(ws: WebSocket):
         pass
     finally:
         store.unsubscribe(q)
+
