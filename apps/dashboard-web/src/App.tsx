@@ -8,7 +8,7 @@ import { TopBar } from './components/TopBar';
 import { AgentRoster } from './components/AgentRoster';
 import { ActivityFeed } from './components/ActivityFeed';
 import { ScenarioToast, type ToastData } from './components/ScenarioToast';
-import { WS_URL, getJson, postJson, type Substation, type Case } from './lib/api';
+import { WS_URL, API_BASE, getJson, postJson, type Substation, type Case } from './lib/api';
 
 type ActivityItem = { id: string; agent?: string; tool?: string; text: string; ts: number };
 type WsStatus = { connected: boolean; reconnecting: boolean };
@@ -25,6 +25,7 @@ export default function App() {
   const [toast, setToast] = useState<ToastData | null>(null);
   const decayTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
+  // Derived KPIs
   const totalMeters = subs.reduce((s, sub) => s + sub.meter_count, 0);
   const offlineMeters = subs.reduce((s, sub) => s + sub.offline_count, 0);
   const onlineMetricsPct = totalMeters > 0 ? ((totalMeters - offlineMeters) / totalMeters) * 100 : 100;
@@ -93,7 +94,7 @@ export default function App() {
           } else if (m.type === 'trace') {
             pulseAgent(m.data.agent);
             pushActivity({
-              id: m.data.id ?? ${"$"}{Date.now()}-{Math.random()},
+              id: m.data.id ?? `${Date.now()}-${Math.random()}`,
               agent: m.data.agent,
               tool: m.data.step,
               text: m.data.agent.replace(/^[a-z]+-/, ''),
@@ -104,14 +105,14 @@ export default function App() {
             if (d.type === 'tool_call') {
               if (d.arguments?.target_agent) pulseAgent(d.arguments.target_agent);
               pushActivity({
-                id: ${"$"}{Date.now()}-{Math.random()},
+                id: `${Date.now()}-${Math.random()}`,
                 tool: d.name,
                 text: JSON.stringify(d.arguments ?? {}).slice(0, 60),
                 ts: Date.now(),
               });
             } else if (d.type === 'final' || d.type === 'answer') {
               pushActivity({
-                id: ${"$"}{Date.now()}-{Math.random()},
+                id: `${Date.now()}-${Math.random()}`,
                 text: '✓ ' + (d.text ?? '').replace(/\n/g, ' ').slice(0, 80),
                 ts: Date.now(),
               });
@@ -137,7 +138,7 @@ export default function App() {
         systemKw={systemKw}
         substations={subs.length}
         foundry={foundryConfigured}
-        agentCount={10}
+        agentCount={12}
         activeCases={activeCases}
         resolvedCases={resolvedCases}
         onlineMetricsPct={onlineMetricsPct}
@@ -145,15 +146,22 @@ export default function App() {
         onReset={handleReset}
       />
       <div className="flex-1 grid grid-cols-12 grid-rows-12 gap-2 p-2 overflow-hidden">
+        {/* Map - top left */}
         <div className="col-span-6 row-span-7 bg-grid-panel border border-grid-border rounded-xl overflow-hidden min-h-0">
           <GridMap substations={subs} />
         </div>
+
+        {/* Agent Roster - top middle */}
         <div className="col-span-3 row-span-7 bg-grid-panel border border-grid-border rounded-xl p-3 overflow-hidden flex flex-col">
           <AgentRoster activeNames={activeAgents} />
         </div>
+
+        {/* Chat - top right */}
         <div className="col-span-3 row-span-7 bg-grid-panel border border-grid-border rounded-xl p-3 overflow-hidden flex flex-col">
           <ChatPanel onAgentActive={pulseAgent} />
         </div>
+
+        {/* Scenarios - bottom left wide */}
         <div className="col-span-6 row-span-3 bg-grid-panel border border-grid-border rounded-xl p-3 overflow-hidden">
           <ScenarioPanel
             onRan={() => getJson<Case[]>('/api/cases').then(setCases)}
@@ -161,12 +169,18 @@ export default function App() {
             onToast={setToast}
           />
         </div>
+
+        {/* Load chart - bottom middle */}
         <div className="col-span-3 row-span-3 bg-grid-panel border border-grid-border rounded-xl p-3 overflow-hidden">
           <LoadChart history={tickHistory} />
         </div>
+
+        {/* Activity feed - bottom right */}
         <div className="col-span-3 row-span-3 bg-grid-panel border border-grid-border rounded-xl p-3 overflow-hidden">
           <ActivityFeed items={activity} onClear={() => setActivity([])} />
         </div>
+
+        {/* Cases - very bottom full width */}
         <div className="col-span-12 row-span-2 bg-grid-panel border border-grid-border rounded-xl p-3 overflow-hidden">
           <CasePanel cases={cases} layout="horizontal" />
         </div>
@@ -174,3 +188,4 @@ export default function App() {
     </div>
   );
 }
+
