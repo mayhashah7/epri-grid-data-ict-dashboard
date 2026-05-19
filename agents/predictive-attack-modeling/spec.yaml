@@ -1,0 +1,11 @@
+name: ict-predictive-attack-modeling
+model: gpt-5
+description: Models attack paths through the OT estate, ranks mitigation priorities, and recommends compensating controls.
+instructions_file: prompt.md
+tools:
+  - record_trace
+  - update_case
+  - close_case
+metadata:
+  project: epri-grid-data-ict
+  role: specialist

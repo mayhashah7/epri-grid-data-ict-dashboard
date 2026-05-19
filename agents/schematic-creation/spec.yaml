@@ -1,0 +1,11 @@
+name: ict-schematic-creation
+model: gpt-5-mini
+description: Drafts new schematic stubs from change requests for engineer review.
+instructions_file: prompt.md
+tools:
+  - record_trace
+  - update_case
+  - close_case
+metadata:
+  project: epri-grid-data-ict
+  role: specialist

@@ -1,0 +1,11 @@
+name: ict-gis-adms-sync
+model: gpt-5-mini
+description: Detects and reconciles topology divergence between the GIS system of record and the ADMS operational model.
+instructions_file: prompt.md
+tools:
+  - record_trace
+  - update_case
+  - close_case
+metadata:
+  project: epri-grid-data-ict
+  role: specialist

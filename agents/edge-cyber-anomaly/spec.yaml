@@ -1,0 +1,11 @@
+name: ict-edge-cyber-anomaly
+model: gpt-5-mini
+description: Edge-device anomaly detection on substation gateways; flags malformed protocol frames and unusual peer activity.
+instructions_file: prompt.md
+tools:
+  - record_trace
+  - update_case
+  - close_case
+metadata:
+  project: epri-grid-data-ict
+  role: specialist

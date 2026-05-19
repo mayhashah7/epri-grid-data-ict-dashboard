@@ -1,0 +1,11 @@
+name: ict-digital-twin-validation
+model: gpt-5
+description: Validates the digital twin model against live telemetry and surfaces calibration drift.
+instructions_file: prompt.md
+tools:
+  - record_trace
+  - update_case
+  - close_case
+metadata:
+  project: epri-grid-data-ict
+  role: specialist

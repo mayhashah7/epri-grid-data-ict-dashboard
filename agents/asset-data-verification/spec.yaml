@@ -1,0 +1,11 @@
+name: ict-asset-data-verification
+model: gpt-5-mini
+description: Cross-checks GIS / CIS / EAM records to detect asset-attribute drift between systems of record.
+instructions_file: prompt.md
+tools:
+  - record_trace
+  - update_case
+  - close_case
+metadata:
+  project: epri-grid-data-ict
+  role: specialist

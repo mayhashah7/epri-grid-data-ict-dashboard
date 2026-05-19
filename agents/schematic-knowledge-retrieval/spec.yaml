@@ -1,0 +1,11 @@
+name: ict-schematic-knowledge-retrieval
+model: gpt-5-chat
+description: RAG over single-line diagrams and protection schemes; answers engineer queries with citations.
+instructions_file: prompt.md
+tools:
+  - record_trace
+  - update_case
+  - close_case
+metadata:
+  project: epri-grid-data-ict
+  role: specialist

@@ -1,0 +1,11 @@
+name: ict-cyber-threat-hunting
+model: gpt-5
+description: Proactive hunt for IT/OT lateral movement, credential abuse, and command-injection in substation control nets.
+instructions_file: prompt.md
+tools:
+  - record_trace
+  - update_case
+  - close_case
+metadata:
+  project: epri-grid-data-ict
+  role: specialist

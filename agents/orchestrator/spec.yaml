@@ -1,0 +1,11 @@
+name: ict-orchestrator
+model: gpt-5-mini
+description: Front door for the Grid Data & ICT agentic platform. Classifies events, opens cases, and dispatches to specialists.
+instructions_file: prompt.md
+tools:
+  - record_trace
+  - update_case
+  - close_case
+metadata:
+  project: epri-grid-data-ict
+  role: orchestrator

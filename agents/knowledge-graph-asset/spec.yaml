@@ -1,0 +1,11 @@
+name: ict-knowledge-graph-asset
+model: gpt-5-mini
+description: Builds and queries the asset knowledge graph (assets ↔ docs ↔ events ↔ work orders).
+instructions_file: prompt.md
+tools:
+  - record_trace
+  - update_case
+  - close_case
+metadata:
+  project: epri-grid-data-ict
+  role: specialist

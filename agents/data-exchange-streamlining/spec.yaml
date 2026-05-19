@@ -1,0 +1,11 @@
+name: ict-data-exchange-streamlining
+model: gpt-5-mini
+description: Normalizes CIM / IEC 61850 / IEC 61968 data exchanges across heterogeneous OT/IT systems.
+instructions_file: prompt.md
+tools:
+  - record_trace
+  - update_case
+  - close_case
+metadata:
+  project: epri-grid-data-ict
+  role: specialist
